@@ -8,15 +8,26 @@ html {
   -webkit-user-select: none;
   -moz-user-select: none;
   overflow: hidden;
+  background-image: url(/static/img/endofmatch-bg2.png)
+}
+#outerCentering {
+  position: absolute;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  align-items: center;
 }
 #overlayCentering {
   position: absolute;
-  bottom: -210px;
-  width: 100%;
-  height: 170px;
+  bottom: -300px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  transform: scale(3);
 }
 #matchOverlayContainer {
   display: flex;
@@ -62,7 +73,7 @@ html {
   border-left: none;
 }
 .teams {
-  width: 70px;
+  width: 55px;
   height: 100%;
   display: none;
   flex-direction: column;
@@ -72,15 +83,6 @@ html {
   font-family: "FuturaLT";
   font-size: 20px;
   line-height: 25px;
-}
-.teams div[data-yellow-card=true] {
-  width: 90%;
-  height: 32%;
-  border-radius: 0.2vw;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #fc0;
 }
 #leftTeams {
   border-right: 1px solid #222;
@@ -125,38 +127,37 @@ html {
   color: #fff;
   opacity: 0;
 }
-.score-right .score-fields {
-  align-items: flex-end;
-}
 .score-fields {
   height: 100%;
   width: 0;
   display: none;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: space-evenly;
   opacity: 0;
 }
-.score-field {
+.score-links {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: "FuturaLTBold";
+  font-size: 17px;
+  color: #fff;
 }
-.coral-icon {
-  width: 35px;
-  margin: 0 12px;
+.link-splitter {
+  margin: 0 -4px;
 }
-.algae-icon {
-  width: 31px;
-  margin: 0 14px;
+.link-icon {
+  margin-top: 5px;
+  width: 25px;
 }
-.score-field > div {
+.score-grid {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 70px;
-  font-family: "FuturaLTBold";
-  font-size: 27px;
-  line-height: 27px;
-  color: #fff;
+}
+.score-grid svg {
+  height: 80%;
 }
 #matchCircle {
   position: absolute;
@@ -211,9 +212,9 @@ html {
 }
 #timeoutDetails {
   position: absolute;
-  bottom: 95px;
-  width: 140px;
-  height: 50px;
+  bottom: 32px;
+  width: 120px;
+  height: 48px;
   z-index: -1;
   padding: 0 20px;
   display: flex;
@@ -339,7 +340,7 @@ html {
   padding-left: 150px;
 }
 .final-breakdown {
-  height: 380px;
+  height: 310px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -349,12 +350,10 @@ html {
   font-size: 24px;
 }
 #leftFinalBreakdown {
-  width: 60px;
   padding-right: 10px;
   align-items: flex-end;
 }
 #rightFinalBreakdown {
-  width: 60px;
   padding-left: 10px;
   align-items: flex-start;
 }
@@ -372,7 +371,7 @@ html {
   align-items: center;
 }
 .final-teams {
-  width: 250px;
+  width: 240px;
   padding: 20px;
   border-radius: 20px;
 }
@@ -388,50 +387,24 @@ html {
 .final-team-row {
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
 }
 .final-team-avatar {
   width: 35px;
   height: 35px;
-  margin-right: 5px;
 }
 .final-team-number {
-  width: 85px;
   color: #fff;
   font-family: "FuturaLT";
   font-size: 32px;
-  line-height: 43px;
-  text-align: center;
-}
-.final-team-card {
-  width: 20px;
-  margin-left: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.final-team-card div {
-  display: none;
-}
-.final-team-card div[data-card=yellow], .final-team-card div[data-card=red] {
-  display: inline-block;
-  width: 15px;
-  height: 20px;
-  border-radius: 4px;
-  border: 1px solid #333;
-}
-.final-team-card div[data-card=yellow] {
-  background-color: #da1;
-}
-.final-team-card div[data-card=red] {
-  background-color: #e00;
 }
 .final-team-rank {
-  width: 50px;
+  width: 20px;
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
+  text-align: right;
 }
 .final-team-rank img {
   width: 15px;
@@ -512,7 +485,7 @@ html {
   background-color: #fff;
   text-align: center;
 }
-#sponsor .carousel-inner, #sponsor .carousel-item {
+#sponsor .carousel-inner, #sponsor .item {
   height: 100%;
 }
 .sponsor-image-container {
@@ -545,37 +518,6 @@ html {
   max-width: 800px;
   max-height: 400px;
 }
-#allianceRankingsCentering {
-  position: absolute;
-  height: 100%;
-  left: 3em;
-  top: 3em;
-}
-#allianceRankings {
-  max-width: 11em;
-  max-height: 92%;
-  display: flex;
-  flex-flow: column wrap;
-  overflow: hidden;
-  background-color: #fff;
-  border: 2px solid #222;
-  font-size: 2em;
-  font-family: "FuturaLT";
-}
-.unpicked {
-  width: 5.5em;
-  display: flex;
-  justify-content: start;
-}
-.unpicked-rank {
-  width: 1.8em;
-  text-align: right;
-  color: #999;
-}
-.unpicked-team {
-  margin-left: 0.3em;
-  color: #222;
-}
 #allianceSelectionCentering {
   position: absolute;
   height: 100%;
@@ -591,18 +533,22 @@ html {
   border: 2px solid #222;
   text-align: center;
   font-family: "FuturaLT";
-  font-size: 2.6em;
+  font-size: 3.5em;
+}
+#allianceSelectionTable img {
+  width: 3em;
+  margin: 0.2em;
 }
 #allianceSelectionTable tr:nth-child(even) {
   background-color: #ccc;
 }
 .alliance-cell {
-  padding: 0px 20px;
+  padding: 0px 40px;
   font-family: "FuturaLT";
   color: #999;
 }
 .selection-cell {
-  width: 3.1em;
+  width: 3.4em;
   color: #222;
 }
 #lowerThird {
