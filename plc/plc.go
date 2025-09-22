@@ -35,6 +35,12 @@ type Plc interface {
 	GetCoilNames() []string
 	GetProcessorCounts() (int, int)
 	SetTrussLights(redLights, blueLights [3]bool)
+	//Freezy Arena
+	SetAlternateIOStopState(input int, state bool)
+	ResetEstops()
+	GetAllCoils() ([coilCount]bool)
+	GetFieldStackLight() (bool, bool, bool, bool)
+	SetMatchState(state uint16)
 }
 
 type ModbusPlc struct {
@@ -97,6 +103,7 @@ const (
 	fieldIoConnection register = iota
 	redProcessor
 	blueProcessor
+	matchState
 	registerCount
 )
 
@@ -347,7 +354,7 @@ func (plc *ModbusPlc) update() {
 		}
 		plc.isHealthy = isHealthy
 	}
-
+	
 	plc.cycleCounter++
 	if plc.cycleCounter == cycleCounterMax {
 		plc.cycleCounter = 0
@@ -458,4 +465,39 @@ func boolToByte(bools []bool) []byte {
 		}
 	}
 	return bytes
+}
+
+// used for Alternate IO stops
+func (plc *ModbusPlc) SetAlternateIOStopState(input int, state bool){
+	plc.inputs[input] = state
+}
+
+func (plc *ModbusPlc) ResetEstops(){
+	plc.inputs[fieldEStop] = true
+	plc.inputs[red1EStop] = true
+	plc.inputs[red2EStop] = true
+	plc.inputs[red3EStop] = true
+	plc.inputs[blue1EStop] = true
+	plc.inputs[blue2EStop] = true
+	plc.inputs[blue3EStop] = true
+	plc.inputs[red1AStop] = true
+	plc.inputs[red2AStop] = true
+	plc.inputs[red3AStop] = true
+	plc.inputs[blue1AStop] = true
+	plc.inputs[blue2AStop] = true
+	plc.inputs[blue3AStop] = true
+}
+
+// Returns the value of all PLC coils.
+func (plc *ModbusPlc) GetAllCoils() [coilCount]bool {
+    return plc.coils
+}
+
+// Returns the state of the field stack light (red, blue, orange, green).
+func (plc *ModbusPlc) GetFieldStackLight() (bool, bool, bool, bool) {
+	return plc.coils[stackLightRed], plc.coils[stackLightBlue], plc.coils[stackLightOrange], plc.coils[stackLightGreen]
+}
+
+func (plc *ModbusPlc) SetMatchState(state uint16){
+	plc.registers[matchState] = state
 }

@@ -96,6 +96,8 @@ type Arena struct {
 	soundsPlayed                      map[*game.MatchSound]struct{}
 	breakDescription                  string
 	preloadedTeams                    *[6]*model.Team
+	lastPlcNotifyTime 		  time.Time
+	Esp32                             plc.Esp32
 }
 
 type AllianceStation struct {
@@ -114,6 +116,7 @@ func NewArena(dbPath string) (*Arena, error) {
 	arena := new(Arena)
 	arena.configureNotifiers()
 	arena.Plc = new(plc.ModbusPlc)
+	arena.Esp32 = new(plc.Esp32IO)
 
 	arena.AllianceStations = make(map[string]*AllianceStation)
 	arena.AllianceStations["R1"] = new(AllianceStation)
@@ -204,6 +207,9 @@ func (arena *Arena) LoadSettings() error {
 		sccDownCommands,
 	)
 	arena.Plc.SetAddress(settings.PlcAddress)
+	arena.Esp32.SetScoreTableAddress(settings.ScoreTableEstopAddress)
+	arena.Esp32.SetRedAllianceStationEstopAddress(settings.RedAllianceStationEstopAddress)
+	arena.Esp32.SetBlueAllianceStationEstopAddress(settings.BlueAllianceStationEstopAddress)
 	arena.TbaClient = partner.NewTbaClient(settings.TbaEventCode, settings.TbaSecretId, settings.TbaSecret)
 	arena.NexusClient = partner.NewNexusClient(settings.TbaEventCode)
 	arena.BlackmagicClient = partner.NewBlackmagicClient(settings.BlackmagicAddresses)
@@ -700,6 +706,7 @@ func (arena *Arena) Run() {
 	go arena.listenForDsUdpPackets()
 	go arena.accessPoint.Run()
 	go arena.Plc.Run()
+	go arena.Esp32.Run()
 
 	for {
 		loopStartTime := time.Now()
@@ -967,7 +974,8 @@ func (arena *Arena) getAssignedAllianceStation(teamId int) string {
 
 // Updates the score given new input information from the field PLC, and actuates PLC outputs accordingly.
 func (arena *Arena) handlePlcInputOutput() {
-	if !arena.Plc.IsEnabled() {
+	// If the PLC is not enabled, or alternate I/O is not enabled, do not process any further PLC inputs.
+	if !arena.Plc.IsEnabled() && !arena.EventSettings.AlternateIOEnabled {
 		return
 	}
 
@@ -983,6 +991,15 @@ func (arena *Arena) handlePlcInputOutput() {
 	arena.handleTeamStop("B1", blueEStops[0], blueAStops[0])
 	arena.handleTeamStop("B2", blueEStops[1], blueAStops[1])
 	arena.handleTeamStop("B3", blueEStops[2], blueAStops[2])
+
+
+	// Only notify every 500ms
+    if arena.lastPlcNotifyTime.IsZero() || time.Since(arena.lastPlcNotifyTime) >= 500*time.Millisecond {
+        //arena.PlcCoilsNotifier.Notify()
+        //arena.Plc.IoChangeNotifier().Notify()
+        arena.lastPlcNotifyTime = time.Now()
+    }
+    
 	redEthernets, blueEthernets := arena.Plc.GetEthernetConnected()
 	arena.AllianceStations["R1"].Ethernet = redEthernets[0]
 	arena.AllianceStations["R2"].Ethernet = redEthernets[1]
@@ -1005,6 +1022,7 @@ func (arena *Arena) handlePlcInputOutput() {
 	blueAllianceReady := arena.checkAllianceStationsReady("B1", "B2", "B3") == nil
 
 	// Handle the evergreen PLC functions: stack lights, stack buzzer, and field reset light.
+	arena.Plc.SetMatchState(uint16(arena.MatchState))
 	switch arena.MatchState {
 	case PreMatch:
 		if arena.lastMatchState != PreMatch {
@@ -1043,8 +1061,8 @@ func (arena *Arena) handlePlcInputOutput() {
 	}
 
 	// Get all the game-specific inputs and update the score.
-	if arena.MatchState == AutoPeriod || arena.MatchState == PausePeriod || arena.MatchState == TeleopPeriod ||
-		inGracePeriod {
+	if (arena.MatchState == AutoPeriod || arena.MatchState == PausePeriod || arena.MatchState == TeleopPeriod ||
+		inGracePeriod) && !arena.EventSettings.AlternateIOEnabled {
 		redScore.ProcessorAlgae, blueScore.ProcessorAlgae = arena.Plc.GetProcessorCounts()
 	}
 	if !oldRedScore.Equals(redScore) || !oldBlueScore.Equals(blueScore) {
