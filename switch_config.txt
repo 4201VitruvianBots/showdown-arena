@@ -1,5 +1,5 @@
 ! Baseline configuration for the Catalyst 3500-series switch. Load this into the switch prior to configuring
-! Cheesy Arena to connect to it. Default password is 1234Five.
+! Cheesy Arena to connect to it. Password is the standard SoCal Showdown password.
 !
 !
 ! Last configuration change at 13:18:54 UTC Sat Sep 28 2019
@@ -11,13 +11,13 @@ service timestamps debug datetime msec
 service timestamps log datetime msec
 no service password-encryption
 !
-hostname ChezySwitch
+hostname ShowdownSwitch
 !
 boot-start-marker
 boot-end-marker
 !
 !
-enable secret 5 $1$kKSW$fCMwnMdYvXui1TulfyYHN/
+enable secret 5 $1$jNn/$93U41SBTz//7L5JC1IFmC1
 !
 no aaa new-model
 system mtu routing 1500
@@ -28,8 +28,7 @@ ip dhcp excluded-address 10.0.100.200 10.0.100.225
 !
 ip dhcp pool dhcppool
  network 10.0.100.0 255.255.255.0
- domain-name team254.com
- dns-server 8.8.8.8 8.8.4.4
+ domain-name socal-showdown.com
  default-router 10.0.100.3
  lease 7
 !
