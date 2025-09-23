@@ -39,6 +39,8 @@ func TestEventSettingsReadWrite(t *testing.T) {
 			CoralBonusCoopEnabled:       true,
 			BargeBonusPointThreshold:    16,
 			IncludeAlgaeInBargeBonus:    false,
+			CompanionAddress:            "",
+			CompanionPort:               51234,
 		},
 		*eventSettings,
 	)
