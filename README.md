@@ -149,6 +149,14 @@ with [Advatek](https://www.advateklights.com) controllers and LEDs.
 See the [Advanced Networking wiki page](https://github.com/Team254/cheesy-arena/wiki/Advanced-Networking-Concepts) for
 instructions on what equipment to obtain and how to configure it in order to support advanced network security.
 
+## Port Configuration
+
+| Device                       | IP Address  | Notes              |
+| ---------------------------- | ----------- | ------------------ |
+| FMS Computer                 | 10.0.100.5  | Gateway: 255.0.0.0 |
+| Blue Alliance Station Switch | 10.0.100.62 |                    |
+|                              |             |                    |
+
 ## Contributing
 
 Cheesy Arena is far from finished! You can help by:
