@@ -3,11 +3,12 @@
   Author: pat@patfairbank.com (Patrick Fairbank)
 */
 
-html {
+html, body {
   cursor: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   overflow: hidden;
+  background: transparent !important;
 }
 #overlayCentering {
   position: absolute;
