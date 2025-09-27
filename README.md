@@ -1,8 +1,6 @@
-Cheesy Arena [![Build Status](https://github.com/Team254/cheesy-arena/actions/workflows/test.yml/badge.svg)](https://github.com/Team254/cheesy-arena/actions)
+SoCal Showdown Arena [![Build Status](https://github.com/Team254/cheesy-arena/actions/workflows/test.yml/badge.svg)](https://github.com/Team254/cheesy-arena/actions)
 ============
-A field management system that just works.
-
-For the game-agnostic version, see [Cheesy Arena Lite](https://github.com/Team254/cheesy-arena-lite).
+A field management system built around Cheesy arena with some modifications to fit the SoCal Showdown use case.
 
 ## Key features
 
@@ -58,6 +56,48 @@ When running Cheesy Arena on a playing field with robots, set the IP address of 
 the network to this hardcoded address so that the FMS does not need to discover them by some other method.
 
 When running Cheesy Arena without robots for testing or development, any IP address can be used.
+
+## Network Switch
+
+The SoCal Showdown rack contains a Cisco 3560G 48 port POE switch. This switch is really old and as a result, it needs to be configured over serial.
+
+This can be acomplished by the following:
+
+```
+sudo yum install tftp-server
+```
+
+```bash
+minicom -b 9600 -D /dev/ttyUSB0
+```
+
+Where `/dev/ttyUSB0` is the device name of the USB to serial adapter connected to the console port on the back of the switch.
+
+To configure the switch:
+
+```
+enable
+```
+
+Then enter the switch password. To backup the configuration on the switch to a TFTP server:
+
+```
+copy startup-config tftp:
+```
+
+Then, to replace the configuration on the switch with one from the TFTP server.
+
+```
+copy tftp: startup-config
+```
+
+Finally, the configuration can be applied.
+
+```
+reload
+```
+
+Note: Use "no" when asked if you want to apply changes from running config.
 
 ## Under the hood
 
