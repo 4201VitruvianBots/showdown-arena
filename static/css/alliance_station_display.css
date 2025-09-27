@@ -14,7 +14,7 @@ body {
   color: #fff;
 }
 body[data-mode=logo] {
-  background-color: #fff;
+  background-color: #6D23B6;
 }
 body[data-mode=fieldReset] {
   background-color: #0a3;
@@ -79,7 +79,7 @@ body[data-mode=timeout] .mode#match {
   background-color: #fff;
   color: #000;
 }
-#preMatch, #inMatch {
+#preMatch, #inMatch { 
   display: none;
 }
 #match[data-state=PRE_MATCH] #preMatch, #match[data-state=POST_MATCH] #preMatch {
@@ -107,7 +107,7 @@ body[data-mode=timeout] .mode#match {
 }
 body[data-position=left] #inMatch #redScore {
   display: block;
-  color: #f43;
+  color: #d1080f;
 }
 body[data-position=middle] #inMatch #timeRemaining {
   display: block;
@@ -115,7 +115,7 @@ body[data-position=middle] #inMatch #timeRemaining {
 }
 body[data-position=right] #inMatch #blueScore {
   display: block;
-  color: #07f;
+  color: #0066B3;
 }
 
 /* Pre Match */

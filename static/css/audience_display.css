@@ -3,11 +3,12 @@
   Author: pat@patfairbank.com (Patrick Fairbank)
 */
 
-html {
+html, body {
   cursor: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   overflow: hidden;
+  background: transparent !important;
 }
 #overlayCentering {
   position: absolute;
@@ -89,10 +90,10 @@ html {
   border-left: 1px solid #222;
 }
 .reversible-left[data-reversed=false], .reversible-right[data-reversed=true] {
-  background-color: #ff4444;
+  background-color: #d1080f;
 }
 .reversible-left[data-reversed=true], .reversible-right[data-reversed=false] {
-  background-color: #2080ff;
+  background-color: #0066B3;
 }
 .score {
   width: 0;
@@ -299,8 +300,8 @@ html {
 }
 #blindsLogo {
   position: relative;
-  top: 24px;
-  height: 300px;
+  top: 30px;
+  height: 240px;
 }
 #finalScoreCentering {
   position: fixed;
