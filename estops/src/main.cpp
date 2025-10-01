@@ -59,6 +59,8 @@ const int stopButtonPins[NUM_BUTTONS] = {33,  // Field stop
                                          18,  // 3E stop
                                          16}; // 3A stop
 
+
+
 bool eth_connected = false;
 
 void onEvent(arduino_event_id_t event, arduino_event_info_t info)
