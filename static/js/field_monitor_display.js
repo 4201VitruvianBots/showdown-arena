@@ -160,6 +160,16 @@ const handleArenaStatus = function (data) {
   });
 };
 
+// Handles a websocket message to play a sound to signal match start/stop/etc.
+const handlePlaySound = function (sound) {
+  $("audio").each(function (k, v) {
+    // Stop and reset any sounds that are still playing.
+    v.pause();
+    v.currentTime = 0;
+  });
+  $("#sound-" + sound)[0].play();
+};
+
 // Handles a websocket message to update the match time countdown.
 const handleMatchTime = function (data) {
   translateMatchTime(data, function (matchState, matchStateText, countdownSec) {
@@ -255,6 +265,9 @@ $(function () {
     },
     matchTiming: function (event) {
       handleMatchTiming(event.data);
+    },
+    playSound: function (event) {
+      handlePlaySound(event.data);
     },
     matchTime: function (event) {
       handleMatchTime(event.data);
