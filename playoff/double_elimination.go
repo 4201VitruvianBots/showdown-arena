@@ -131,6 +131,7 @@ func newDoubleEliminationBracket(numAlliances int) (*Matchup, []breakSpec, error
 	breakSpecs := []breakSpec{
 		{9, 360, "Field Break"},
 		{11, 360, "Field Break"},
+		{12, 360, "Field Break"},
 		{13, 900, "Awards Break"},
 		{14, 900, "Awards Break"},
 		{15, 900, "Awards Break"},
