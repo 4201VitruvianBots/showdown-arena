@@ -128,10 +128,10 @@ func newDoubleEliminationBracket(numAlliances int) (*Matchup, []breakSpec, error
 	}
 
 	// Define scheduled breaks.
+	// Format is {match number before break, break duration in seconds, break name}
 	breakSpecs := []breakSpec{
-		{9, 360, "Field Break"},
+		{9, 360, "Field Break"}, // Added per SC5
 		{11, 360, "Field Break"},
-		{12, 360, "Field Break"},
 		{13, 900, "Awards Break"},
 		{14, 900, "Awards Break"},
 		{15, 900, "Awards Break"},
