@@ -218,6 +218,7 @@ func (web *Web) newHandler() http.Handler {
 	mux.HandleFunc("GET /setup/schedule", web.scheduleGetHandler)
 	mux.HandleFunc("POST /setup/schedule/generate", web.scheduleGeneratePostHandler)
 	mux.HandleFunc("POST /setup/schedule/save", web.scheduleSavePostHandler)
+    mux.HandleFunc("POST /setup/schedule/upload", web.scheduleUploadPostHandler)
 	mux.HandleFunc("GET /setup/settings", web.settingsGetHandler)
 	mux.HandleFunc("POST /setup/settings", web.settingsPostHandler)
 	mux.HandleFunc("GET /setup/settings/publish_alliances", web.settingsPublishAlliancesHandler)

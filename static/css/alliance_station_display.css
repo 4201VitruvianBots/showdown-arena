@@ -79,11 +79,19 @@ body[data-mode=timeout] .mode#match {
   background-color: #fff;
   color: #000;
 }
-#preMatch, #inMatch { 
+#preMatch, #inMatch {
   display: none;
 }
+
+/* Make preMatch a flex column so the team number can flex to available space
+   and the databar sits at the bottom without overlapping. */
 #match[data-state=PRE_MATCH] #preMatch, #match[data-state=POST_MATCH] #preMatch {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  /* Fill the full match container so flex children can position correctly. */
+  height: 100%;
 }
 #match[data-state=WARMUP_PERIOD] #inMatch, #match[data-state=AUTO_PERIOD] #inMatch,
 #match[data-state=PAUSE_PERIOD] #inMatch, #match[data-state=TELEOP_PERIOD] #inMatch,
@@ -118,29 +126,56 @@ body[data-position=right] #inMatch #blueScore {
   color: #0066B3;
 }
 
-/* Pre Match */
 #preMatch #teamNumber {
   position: absolute;
   top: 100px;
   left: 0;
   right: 0;
   margin: 0 auto;
-  font-size: 28vw;
-  line-height: 450px;
+  /* Limit the team number area so it won't overlap the bottom databar. */
+  max-height: calc(100vh - 300px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  line-height: 1;
+  overflow: hidden;
+  /* Responsive font sizing: clamp between a reasonable minimum, a size based on
+     available viewport height, and a maximum based on viewport width. */
+  font-size: clamp(48px, calc((100vh - 300px) * 0.7), 32vw);
+  padding: 0 10px;
+}
+
+#preMatch #tableNumber {
+  position: fixed;
+  left: 0px;
+  top: 50%;
+  transform: rotate(90deg) translateX(-65%);
+  transform-origin: left;
+  text-align: center;
+  font-size: 200px;
+  color: #fff;
+  font-family: "FuturaLT";
+  white-space: nowrap;
 }
 #preMatch .databar {
-  position: absolute;
-  bottom: 100px;
-  left: 0;
-  right: 0;
-  margin: 0 auto;
-  height: 200px;
-  line-height: 200px;
+  /* Place databar at the bottom of the preMatch area. Use a fixed height so
+     the team number can size against the remaining space. margin-top: auto
+     pushes this flex item to the bottom of the column. */
+  flex: 0 0 180px;  /* Reduced from 200px */
+  margin-top: auto;
+  margin-bottom: 3%;  /* Reduced from 5% */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   text-align: center;
   font-family: "FuturaLT";
   font-size: 120px;
+  line-height: 1;
   color: #fff;
+  padding: 0 10px;
+  word-wrap: break-word;
 }
 #preMatch .databar#disabled {
   font-family: "FuturaLTBold";

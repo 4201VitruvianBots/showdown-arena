@@ -57,6 +57,7 @@ UI for generating a match schedule.
               <p>
                 <button type="submit" class="btn btn-danger">Save Schedule</button>
               </p>
+              <!-- CSV upload form moved below to avoid nested forms -->
             </div>
           </div>
           {{if .EventSettings.TbaPublishingEnabled}}
@@ -64,6 +65,11 @@ UI for generating a match schedule.
             tab.</p>
           {{end}}
         </fieldset>
+      </form>
+      <!-- CSV upload form (separate form to avoid nesting) -->
+      <form id="uploadForm" action="/setup/schedule/upload?matchType={{.MatchType}}" method="POST" enctype="multipart/form-data" style="margin-top:10px;">
+        <input type="file" name="csvFile" accept=".csv" />
+        <button type="submit" class="btn btn-secondary">Upload CSV</button>
       </form>
     </div>
   </div>

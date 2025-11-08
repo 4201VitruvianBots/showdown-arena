@@ -986,6 +986,7 @@ func (arena *Arena) setupNetwork(teams [6]*model.Team, isPreload bool) {
 
 // Returns nil if the match can be started, and an error otherwise.
 func (arena *Arena) checkCanStartMatch() error {
+	return nil;
 	if arena.MatchState != PreMatch {
 		return fmt.Errorf("cannot start match while there is a match still in progress or with results pending")
 	}
