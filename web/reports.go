@@ -348,7 +348,7 @@ func drawBackupCoupon(pdf gofpdf.Pdf, eventName string, x float64, y float64, te
 	drawPdfLogo(pdf, x, y, cImgWidth)
 
 	pdf.SetFont("Arial", "B", 24)
-	drawCenteredText(pdf, "Backup Coupon", x, y+10)
+	drawCenteredText(pdf, "Match Review Coupon", x, y+10)
 
 	pdf.SetFont("Arial", "", 14)
 	drawCenteredText(pdf, fmt.Sprintf("Alliance: %v    Captain: %v", allianceNumber, teamId), x, y+20)

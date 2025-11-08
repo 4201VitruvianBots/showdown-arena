@@ -1073,14 +1073,14 @@ func (arena *Arena) handlePlcInputOutput() {
 		arena.AbortMatch()
 	}
 	// Disabled for hybrid PLC and alternate IO setup
-	// redEStops, blueEStops := arena.Plc.GetTeamEStops()
-	// redAStops, blueAStops := arena.Plc.GetTeamAStops()
-	// arena.handleTeamStop("R1", redEStops[0], redAStops[0])
-	// arena.handleTeamStop("R2", redEStops[1], redAStops[1])
-	// arena.handleTeamStop("R3", redEStops[2], redAStops[2])
-	// arena.handleTeamStop("B1", blueEStops[0], blueAStops[0])
-	// arena.handleTeamStop("B2", blueEStops[1], blueAStops[1])
-	// arena.handleTeamStop("B3", blueEStops[2], blueAStops[2])
+	redEStops, blueEStops := arena.Plc.GetTeamEStops()
+	redAStops, blueAStops := arena.Plc.GetTeamAStops()
+	arena.handleTeamStop("R1", redEStops[0], redAStops[0])
+	arena.handleTeamStop("R2", redEStops[1], redAStops[1])
+	arena.handleTeamStop("R3", redEStops[2], redAStops[2])
+	arena.handleTeamStop("B1", blueEStops[0], blueAStops[0])
+	arena.handleTeamStop("B2", blueEStops[1], blueAStops[1])
+	arena.handleTeamStop("B3", blueEStops[2], blueAStops[2])
 
 
 	// Only notify every 500ms
@@ -1091,13 +1091,13 @@ func (arena *Arena) handlePlcInputOutput() {
     }
     
 	// Disabled for hybrid PLC and alternate IO setup
-	// redEthernets, blueEthernets := arena.Plc.GetEthernetConnected()
-	// arena.AllianceStations["R1"].Ethernet = redEthernets[0]
-	// arena.AllianceStations["R2"].Ethernet = redEthernets[1]
-	// arena.AllianceStations["R3"].Ethernet = redEthernets[2]
-	// arena.AllianceStations["B1"].Ethernet = blueEthernets[0]
-	// arena.AllianceStations["B2"].Ethernet = blueEthernets[1]
-	// arena.AllianceStations["B3"].Ethernet = blueEthernets[2]
+	redEthernets, blueEthernets := arena.Plc.GetEthernetConnected()
+	arena.AllianceStations["R1"].Ethernet = redEthernets[0]
+	arena.AllianceStations["R2"].Ethernet = redEthernets[1]
+	arena.AllianceStations["R3"].Ethernet = redEthernets[2]
+	arena.AllianceStations["B1"].Ethernet = blueEthernets[0]
+	arena.AllianceStations["B2"].Ethernet = blueEthernets[1]
+	arena.AllianceStations["B3"].Ethernet = blueEthernets[2]
 
 	// Handle in-match PLC functions.
 	redScore := &arena.RedRealtimeScore.CurrentScore
@@ -1153,7 +1153,7 @@ func (arena *Arena) handlePlcInputOutput() {
 
 	// Get all the game-specific inputs and update the score.
 	if (arena.MatchState == AutoPeriod || arena.MatchState == PausePeriod || arena.MatchState == TeleopPeriod ||
-		inGracePeriod) && !arena.EventSettings.AlternateIOEnabled {
+		inGracePeriod) {
 		redScore.ProcessorAlgae, blueScore.ProcessorAlgae = arena.Plc.GetProcessorCounts()
 	}
 	if !oldRedScore.Equals(redScore) || !oldBlueScore.Equals(blueScore) {
