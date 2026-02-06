@@ -29,6 +29,7 @@ type ArenaNotifiers struct {
 	ReloadDisplaysNotifier             *websocket.Notifier
 	ScorePostedNotifier                *websocket.Notifier
 	ScoringStatusNotifier              *websocket.Notifier
+	PlcCoilsNotifier                   *websocket.Notifier
 }
 
 type MatchTimeMessage struct {
@@ -64,6 +65,8 @@ func (arena *Arena) configureNotifiers() {
 	arena.ReloadDisplaysNotifier = websocket.NewNotifier("reload", nil)
 	arena.ScorePostedNotifier = websocket.NewNotifier("scorePosted", arena.GenerateScorePostedMessage)
 	arena.ScoringStatusNotifier = websocket.NewNotifier("scoringStatus", arena.generateScoringStatusMessage)
+	arena.PlcCoilsNotifier = websocket.NewNotifier("plcCoils", arena.generatePlcCoilsMessage)
+
 }
 
 func (arena *Arena) generateAllianceSelectionMessage() any {
@@ -97,6 +100,12 @@ func (arena *Arena) generateArenaStatusMessage() any {
 		PlcIsHealthy          bool
 		FieldEStop            bool
 		PlcArmorBlockStatuses map[string]bool
+		ScoreTableIOEnabled   bool
+		RedEstopsEnabled      bool
+		BlueEstopsEnabled     bool
+		ScoreTableIOIsHealthy bool
+		RedEstopsIsHealthy    bool
+		BlueEStopsIsHealthy   bool
 	}{
 		arena.CurrentMatch.Id,
 		arena.AllianceStations,
@@ -109,6 +118,12 @@ func (arena *Arena) generateArenaStatusMessage() any {
 		arena.Plc.IsHealthy(),
 		arena.Plc.GetFieldEStop(),
 		arena.Plc.GetArmorBlockStatuses(),
+		arena.Esp32.IsScoreTableIOEnabled(),
+		arena.Esp32.IsRedEstopsEnabled(),
+		arena.Esp32.IsBlueEstopsEnabled(),
+		arena.Esp32.IsScoreTableHealthy(),
+		arena.Esp32.IsRedEstopsHealthy(),
+		arena.Esp32.IsBlueEstopsHealthy(),
 	}
 }
 
@@ -207,6 +222,21 @@ func (arena *Arena) generateMatchTimeMessage() any {
 
 func (arena *Arena) generateMatchTimingMessage() any {
 	return &game.MatchTiming
+}
+
+func (arena *Arena) generatePlcCoilsMessage() any {
+	// Get the current state of all PLC coils.
+    coilsArray := arena.Plc.GetAllCoils()
+    coilsArrayNames := arena.Plc.GetCoilNames()
+
+	// Build a map pairing coil names with their values.
+    coilsMap := make(map[string]bool)
+    for i, name := range coilsArrayNames {
+        if i < len(coilsArray) {
+            coilsMap[name] = coilsArray[i]
+        }
+    }
+	return coilsMap
 }
 
 func (arena *Arena) generateRealtimeScoreMessage() any {

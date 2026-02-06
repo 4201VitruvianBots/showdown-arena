@@ -11,7 +11,8 @@ func _() {
 	_ = x[fieldIoConnection-0]
 	_ = x[redProcessor-1]
 	_ = x[blueProcessor-2]
-	_ = x[registerCount-3]
+	_ = x[matchState-3]
+	_ = x[registerCount-4]
 }
 
 const _register_name = "fieldIoConnectionredProcessorblueProcessorregisterCount"

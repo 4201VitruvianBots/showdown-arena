@@ -150,6 +150,8 @@ func (web *Web) newHandler() http.Handler {
 	mux.HandleFunc("GET /displays/announcer/websocket", web.announcerDisplayWebsocketHandler)
 	mux.HandleFunc("GET /displays/audience", web.audienceDisplayHandler)
 	mux.HandleFunc("GET /displays/audience/websocket", web.audienceDisplayWebsocketHandler)
+	mux.HandleFunc("GET /displays/field_audience", web.fieldAudienceDisplayHandler)
+	mux.HandleFunc("GET /displays/field_audience/websocket", web.fieldAudienceDisplayWebsocketHandler)
 	mux.HandleFunc("GET /displays/bracket", web.bracketDisplayHandler)
 	mux.HandleFunc("GET /displays/bracket/websocket", web.bracketDisplayWebsocketHandler)
 	mux.HandleFunc("GET /displays/field_monitor", web.fieldMonitorDisplayHandler)
@@ -234,6 +236,14 @@ func (web *Web) newHandler() http.Handler {
 	mux.HandleFunc("GET /setup/teams/generate_wpa_keys", web.teamsGenerateWpaKeysHandler)
 	mux.HandleFunc("GET /setup/teams/progress", web.teamsUpdateProgressBarHandler)
 	mux.HandleFunc("GET /setup/teams/refresh", web.teamsRefreshHandler)
+
+	// Freezy Arena
+	mux.HandleFunc("POST /api/freezy/eStopState", web.eStopStatePostHandler)
+	mux.HandleFunc("GET /panel/freezy/eStopControl/{alliance}", web.estopContolDisplayHandler)
+	mux.HandleFunc("GET /panel/freezy/eStopControl/websocket", web.estopContolDisplayWebsocketHandler)
+	mux.HandleFunc("GET /panel/freezy/eStopControl/{alliance}/websocket", web.scoringPanelWebsocketHandler)
+	mux.HandleFunc("GET /api/freezy/alternateIO/PLC_Coils", web.getAllPlcCoilsGetHandler)
+
 	return mux
 }
 

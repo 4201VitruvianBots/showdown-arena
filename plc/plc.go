@@ -7,11 +7,12 @@ package plc
 
 import (
 	"fmt"
-	"github.com/Team254/cheesy-arena/websocket"
-	"github.com/goburrow/modbus"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/Team254/cheesy-arena/websocket"
+	"github.com/goburrow/modbus"
 )
 
 type Plc interface {
@@ -35,6 +36,12 @@ type Plc interface {
 	GetCoilNames() []string
 	GetProcessorCounts() (int, int)
 	SetTrussLights(redLights, blueLights [3]bool)
+	//Freezy Arena
+	SetAlternateIOStopState(input int, state bool)
+	ResetEstops()
+	GetAllCoils() [coilCount]bool
+	GetFieldStackLight() (bool, bool, bool, bool)
+	SetMatchState(state uint16)
 }
 
 type ModbusPlc struct {
@@ -97,6 +104,7 @@ const (
 	fieldIoConnection register = iota
 	redProcessor
 	blueProcessor
+	matchState
 	registerCount
 )
 
@@ -189,7 +197,7 @@ func (plc *ModbusPlc) Run() {
 func (plc *ModbusPlc) GetArmorBlockStatuses() map[string]bool {
 	statuses := make(map[string]bool, armorBlockCount)
 	for i := 0; i < int(armorBlockCount); i++ {
-		statuses[strings.Title(armorBlock(i).String())] = plc.registers[fieldIoConnection]&(1<<i) > 0
+		statuses[strings.Title(armorBlock(i).String())] = true 
 	}
 	return statuses
 }
@@ -377,7 +385,40 @@ func (plc *ModbusPlc) readInputs() bool {
 		return false
 	}
 
+	var temp_red1EStop = plc.inputs[red1EStop]
+	var temp_red2EStop = plc.inputs[red2EStop]
+	var temp_red3EStop = plc.inputs[red3EStop]
+	var temp_blue1EStop = plc.inputs[blue1EStop]
+	var temp_blue2EStop = plc.inputs[blue2EStop]
+	var temp_blue3EStop = plc.inputs[blue3EStop]
+	var temp_red1AStop = plc.inputs[red1AStop]
+	var temp_red2AStop = plc.inputs[red2AStop]
+	var temp_red3AStop = plc.inputs[red3AStop]
+	var temp_blue1AStop = plc.inputs[blue1AStop]
+	var temp_blue2AStop = plc.inputs[blue2AStop]
+	var temp_blue3AStop = plc.inputs[blue3AStop]
+
 	copy(plc.inputs[:], byteToBool(inputs, len(plc.inputs)))
+
+	plc.inputs[red1EStop] = temp_red1EStop
+	plc.inputs[red2EStop] = temp_red2EStop
+	plc.inputs[red3EStop] = temp_red3EStop
+	plc.inputs[blue1EStop] = temp_blue1EStop
+	plc.inputs[blue2EStop] = temp_blue2EStop
+	plc.inputs[blue3EStop] = temp_blue3EStop
+	plc.inputs[red1AStop] = temp_red1AStop
+	plc.inputs[red2AStop] = temp_red2AStop
+	plc.inputs[red3AStop] = temp_red3AStop
+	plc.inputs[blue1AStop] = temp_blue1AStop
+	plc.inputs[blue2AStop] = temp_blue2AStop
+	plc.inputs[blue3AStop] = temp_blue3AStop
+	plc.inputs[blueConnected1] = true
+	plc.inputs[blueConnected2] = true
+	plc.inputs[blueConnected3] = true
+	plc.inputs[redConnected1] = true
+	plc.inputs[redConnected2] = true
+	plc.inputs[redConnected3] = true
+
 	return true
 }
 
@@ -458,4 +499,41 @@ func boolToByte(bools []bool) []byte {
 		}
 	}
 	return bytes
+}
+
+// used for Alternate IO stops
+func (plc *ModbusPlc) SetAlternateIOStopState(input int, state bool) {
+	if input != 0 {
+		plc.inputs[input] = state
+	}
+}
+
+func (plc *ModbusPlc) ResetEstops() {
+	plc.inputs[fieldEStop] = true
+	plc.inputs[red1EStop] = true
+	plc.inputs[red2EStop] = true
+	plc.inputs[red3EStop] = true
+	plc.inputs[blue1EStop] = true
+	plc.inputs[blue2EStop] = true
+	plc.inputs[blue3EStop] = true
+	plc.inputs[red1AStop] = true
+	plc.inputs[red2AStop] = true
+	plc.inputs[red3AStop] = true
+	plc.inputs[blue1AStop] = true
+	plc.inputs[blue2AStop] = true
+	plc.inputs[blue3AStop] = true
+}
+
+// Returns the value of all PLC coils.
+func (plc *ModbusPlc) GetAllCoils() [coilCount]bool {
+	return plc.coils
+}
+
+// Returns the state of the field stack light (red, blue, orange, green).
+func (plc *ModbusPlc) GetFieldStackLight() (bool, bool, bool, bool) {
+	return plc.coils[stackLightRed], plc.coils[stackLightBlue], plc.coils[stackLightOrange], plc.coils[stackLightGreen]
+}
+
+func (plc *ModbusPlc) SetMatchState(state uint16) {
+	plc.registers[matchState] = state
 }
