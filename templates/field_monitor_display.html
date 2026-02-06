@@ -46,6 +46,10 @@ Display showing robot connection status.
       <div id="rightScore" class="right-score ds-dependent text-center fta-dependent reversible-right "
         style="width: 8%;"></div>
     </div>
+    {{range $sound := .MatchSounds}}
+    <audio id="sound-{{$sound.Name}}" src="/static/audio/{{$sound.Name}}.{{$sound.FileExtension}}" preload="auto">
+    </audio>
+    {{end}}
   </body>
   <script src="/static/js/lib/jquery.min.js"></script>
   <script src="/static/js/lib/jquery.json-2.4.min.js"></script>

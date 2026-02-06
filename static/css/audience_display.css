@@ -3,11 +3,12 @@
   Author: pat@patfairbank.com (Patrick Fairbank)
 */
 
-html {
+html, body {
   cursor: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   overflow: hidden;
+  background: transparent !important;
 }
 #overlayCentering {
   position: absolute;
@@ -89,10 +90,10 @@ html {
   border-left: 1px solid #222;
 }
 .reversible-left[data-reversed=false], .reversible-right[data-reversed=true] {
-  background-color: #ff4444;
+  background-color: #d1080f;
 }
 .reversible-left[data-reversed=true], .reversible-right[data-reversed=false] {
-  background-color: #2080ff;
+  background-color: #0066B3;
 }
 .score {
   width: 0;
@@ -169,12 +170,12 @@ html {
 }
 #logo {
   position: relative;
-  top: 38px;
-  height: 70px;
+  top: 25px;
+  height: 90px;
 }
 #matchTime {
   position: relative;
-  top: 17px;
+  top: 8px;
   height: 60px;
   color: #222;
   font-family: "FuturaLTBold";
@@ -299,8 +300,8 @@ html {
 }
 #blindsLogo {
   position: relative;
-  top: 55px;
-  height: 220px;
+  top: 30px;
+  height: 240px;
 }
 #finalScoreCentering {
   position: fixed;
@@ -526,7 +527,7 @@ html {
   margin: 0;
 }
 #sponsor h1 {
-  font-size: 60px;
+  font-size: 50px;
   background-color: #444;
   color: #fff;
   padding: 0.25em;
@@ -534,7 +535,7 @@ html {
   left: 0;
   bottom: 0;
   right: 0;
-  height: 96px;
+  height: 88px;
 }
 #sponsor h2 {
   font-size: 6em;

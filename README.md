@@ -1,8 +1,6 @@
-Cheesy Arena [![Build Status](https://github.com/Team254/cheesy-arena/actions/workflows/test.yml/badge.svg)](https://github.com/Team254/cheesy-arena/actions)
+SoCal Showdown Arena [![Build Status](https://github.com/Team254/cheesy-arena/actions/workflows/test.yml/badge.svg)](https://github.com/Team254/cheesy-arena/actions)
 ============
-A field management system that just works.
-
-For the game-agnostic version, see [Cheesy Arena Lite](https://github.com/Team254/cheesy-arena-lite).
+A field management system built around Cheesy arena with some modifications to fit the SoCal Showdown use case.
 
 ## Key features
 
@@ -59,6 +57,48 @@ the network to this hardcoded address so that the FMS does not need to discover 
 
 When running Cheesy Arena without robots for testing or development, any IP address can be used.
 
+## Network Switch
+
+The SoCal Showdown rack contains a Cisco 3560G 48 port POE switch. This switch is really old and as a result, it needs to be configured over serial.
+
+This can be acomplished by the following:
+
+```
+sudo yum install tftp-server
+```
+
+```bash
+minicom -b 9600 -D /dev/ttyUSB0
+```
+
+Where `/dev/ttyUSB0` is the device name of the USB to serial adapter connected to the console port on the back of the switch.
+
+To configure the switch:
+
+```
+enable
+```
+
+Then enter the switch password. To backup the configuration on the switch to a TFTP server:
+
+```
+copy startup-config tftp:
+```
+
+Then, to replace the configuration on the switch with one from the TFTP server.
+
+```
+copy tftp: startup-config
+```
+
+Finally, the configuration can be applied.
+
+```
+reload
+```
+
+Note: Use "no" when asked if you want to apply changes from running config.
+
 ## Under the hood
 
 Cheesy Arena is written using [Go](https://golang.org), a language developed by Google and first released in 2009. Go
@@ -108,6 +148,14 @@ with [Advatek](https://www.advateklights.com) controllers and LEDs.
 
 See the [Advanced Networking wiki page](https://github.com/Team254/cheesy-arena/wiki/Advanced-Networking-Concepts) for
 instructions on what equipment to obtain and how to configure it in order to support advanced network security.
+
+## Port Configuration
+
+| Device                       | IP Address  | Notes              |
+| ---------------------------- | ----------- | ------------------ |
+| FMS Computer                 | 10.0.100.5  | Gateway: 255.0.0.0 |
+| Blue Alliance Station Switch | 10.0.100.62 |                    |
+|                              |             |                    |
 
 ## Contributing
 
