@@ -2961,6 +2961,16 @@
 	)
 	(wire
 		(pts
+			(xy 139.7 62.23) (xy 154.94 62.23)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "34799d3b-7b45-4a64-a730-3e742e03d78b")
+	)
+	(wire
+		(pts
 			(xy 34.29 101.6) (xy 26.67 101.6)
 		)
 		(stroke
@@ -28835,6 +28845,16 @@
 			"RU5ErkJggg=="
 		)
 	)
+	(label "LED"
+		(at 139.7 62.23 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "06dd6ed0-6487-4f36-a57f-ca828f83a62b")
+	)
 	(label "R1"
 		(at 193.04 44.45 180)
 		(effects
@@ -28965,6 +28985,16 @@
 		)
 		(uuid "459cf75d-4ae9-4a16-ab9e-3084373a062b")
 	)
+	(label "B2"
+		(at 193.04 59.69 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "48c068ee-7540-413b-a4d7-2e38335d4a59")
+	)
 	(label "PWM2"
 		(at 181.61 123.19 0)
 		(effects
@@ -29084,16 +29114,6 @@
 			(justify left bottom)
 		)
 		(uuid "a3c970c2-242a-4b0c-b8ef-44215a851e2a")
-	)
-	(label "LED"
-		(at 193.04 59.69 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "a5035311-1fd7-4e90-8e1b-15e04f52e986")
 	)
 	(label "B1"
 		(at 107.95 162.56 0)
