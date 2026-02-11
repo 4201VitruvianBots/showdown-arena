@@ -58,7 +58,12 @@
           "width": 0.0
         }
       ],
-      "drc_exclusions": [],
+      "drc_exclusions": [
+        [
+          "starved_thermal|131311319|102368679|5ddbff08-960d-4fb9-bb14-dde3a82c9e10|a3f654df-d83f-4444-aa32-4539e389ba16|B.Cu",
+          ""
+        ]
+      ],
       "meta": {
         "version": 2
       },
@@ -188,6 +193,7 @@
       ],
       "track_widths": [
         0.0,
+        0.2,
         0.3,
         0.5,
         1.0,
@@ -475,7 +481,7 @@
     "classes": [
       {
         "bus_width": 12,
-        "clearance": 0.2,
+        "clearance": 0.15,
         "diff_pair_gap": 0.25,
         "diff_pair_via_gap": 0.25,
         "diff_pair_width": 0.2,

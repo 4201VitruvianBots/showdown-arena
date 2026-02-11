@@ -434,6 +434,196 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Connector:Screw_Terminal_01x02"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "J"
+				(at 0 2.54 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Screw_Terminal_01x02"
+				(at 0 -5.08 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Generic screw terminal, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "screw terminal"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "TerminalBlock*:*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "Screw_Terminal_01x02_1_1"
+				(rectangle
+					(start -1.27 1.27)
+					(end 1.27 -3.81)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.5334 0.3302) (xy 0.3302 -0.508)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.5334 -2.2098) (xy 0.3302 -3.048)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.3556 0.508) (xy 0.508 -0.3302)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.3556 -2.032) (xy 0.508 -2.8702)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 0 0)
+					(radius 0.635)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 0 -2.54)
+					(radius 0.635)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at -5.08 0 0)
+					(length 3.81)
+					(name "Pin_1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -2.54 0)
+					(length 3.81)
+					(name "Pin_2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Connector_Generic:Conn_02x08_Odd_Even"
 			(pin_names
 				(offset 1.016)
@@ -2261,6 +2451,113 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Mechanical:MountingHole_Pad"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(property "Reference" "H"
+				(at 0 6.35 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "MountingHole_Pad"
+				(at 0 4.445 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Mounting Hole with connection"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "mounting hole"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "MountingHole*Pad*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "MountingHole_Pad_0_1"
+				(circle
+					(center 0 1.27)
+					(radius 1.27)
+					(stroke
+						(width 1.27)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "MountingHole_Pad_1_1"
+				(pin input line
+					(at 0 -2.54 90)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "power:+12V"
 			(power)
 			(pin_numbers
@@ -2674,8 +2971,8 @@
 		(uuid 563e6f8b-6d05-431a-9e78-6bb95be4c68a)
 	)
 	(rectangle
-		(start 165.1 96.52)
-		(end 261.62 147.32)
+		(start 165.1 86.36)
+		(end 261.62 137.16)
 		(stroke
 			(width 0)
 			(type default)
@@ -2684,6 +2981,30 @@
 			(type none)
 		)
 		(uuid 5c0af762-119f-4181-a683-2a01ea68e630)
+	)
+	(rectangle
+		(start 222.25 142.24)
+		(end 260.35 170.18)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(uuid c401ba7d-be76-4612-af4b-eadb3fe86be1)
+	)
+	(rectangle
+		(start 124.46 99.06)
+		(end 162.56 129.54)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(uuid e457b0cd-3a88-4e46-ab67-fc094f0a0474)
 	)
 	(text "LED Matrix"
 		(exclude_from_sim no)
@@ -2707,7 +3028,7 @@
 	)
 	(text "Motor PWM Driver"
 		(exclude_from_sim no)
-		(at 175.006 99.06 0)
+		(at 175.006 88.9 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2724,6 +3045,26 @@
 			)
 		)
 		(uuid "5b6fbd4b-6637-4e87-99f0-0232b34c9406")
+	)
+	(text "Mounting holes"
+		(exclude_from_sim no)
+		(at 231.648 145.034 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "82332dcc-19fc-46f2-b8af-4a1e59acc366")
+	)
+	(text "12V Connection"
+		(exclude_from_sim no)
+		(at 133.096 101.6 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "b336c699-73a9-4556-90fa-479fe3eae301")
 	)
 	(text "ESP32"
 		(exclude_from_sim no)
@@ -2758,6 +3099,24 @@
 		(uuid "467970ed-2193-4750-ace9-d6b3255932e7")
 	)
 	(junction
+		(at 243.84 160.02)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "6a1bd721-b346-45e3-930d-8d82090d2471")
+	)
+	(junction
+		(at 240.03 160.02)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "6c15032b-7f95-4b35-b02c-ce3d62fd2373")
+	)
+	(junction
+		(at 236.22 160.02)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "942e09f3-49aa-46ca-a9e3-d45a1fe4e532")
+	)
+	(junction
 		(at 26.67 83.82)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2781,7 +3140,7 @@
 	)
 	(wire
 		(pts
-			(xy 215.9 129.54) (xy 228.6 129.54)
+			(xy 215.9 119.38) (xy 228.6 119.38)
 		)
 		(stroke
 			(width 0)
@@ -2801,7 +3160,7 @@
 	)
 	(wire
 		(pts
-			(xy 181.61 123.19) (xy 189.23 123.19)
+			(xy 181.61 113.03) (xy 189.23 113.03)
 		)
 		(stroke
 			(width 0)
@@ -2861,13 +3220,23 @@
 	)
 	(wire
 		(pts
-			(xy 215.9 105.41) (xy 215.9 118.11)
+			(xy 215.9 95.25) (xy 215.9 107.95)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "1ed4566d-c640-4c86-8178-d3a8c3489aca")
+	)
+	(wire
+		(pts
+			(xy 228.6 157.48) (xy 228.6 160.02)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1fcfb478-85f2-42c9-8ae6-93bbb7380340")
 	)
 	(wire
 		(pts
@@ -2891,6 +3260,16 @@
 	)
 	(wire
 		(pts
+			(xy 240.03 160.02) (xy 236.22 160.02)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "243be375-84ee-4720-83e4-0b7c6a8a6a69")
+	)
+	(wire
+		(pts
 			(xy 177.8 46.99) (xy 193.04 46.99)
 		)
 		(stroke
@@ -2908,6 +3287,16 @@
 			(type default)
 		)
 		(uuid "2688ba87-feb2-421b-b295-8e2c99a8af66")
+	)
+	(wire
+		(pts
+			(xy 251.46 160.02) (xy 243.84 160.02)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "26e9344c-7998-4cea-b1c8-52d0e9486b94")
 	)
 	(wire
 		(pts
@@ -2931,13 +3320,23 @@
 	)
 	(wire
 		(pts
-			(xy 228.6 105.41) (xy 215.9 105.41)
+			(xy 228.6 95.25) (xy 215.9 95.25)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "2d2e3664-dd5e-4ba7-bfdb-1a5d9a272d08")
+	)
+	(wire
+		(pts
+			(xy 236.22 160.02) (xy 228.6 160.02)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "319870b6-7082-4756-9556-d8456e31646b")
 	)
 	(wire
 		(pts
@@ -2951,7 +3350,17 @@
 	)
 	(wire
 		(pts
-			(xy 170.18 123.19) (xy 170.18 124.46)
+			(xy 243.84 157.48) (xy 243.84 160.02)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "32f91737-7031-4af0-aa36-7e6502b06a33")
+	)
+	(wire
+		(pts
+			(xy 170.18 113.03) (xy 170.18 114.3)
 		)
 		(stroke
 			(width 0)
@@ -3001,7 +3410,7 @@
 	)
 	(wire
 		(pts
-			(xy 215.9 123.19) (xy 215.9 129.54)
+			(xy 215.9 113.03) (xy 215.9 119.38)
 		)
 		(stroke
 			(width 0)
@@ -3011,7 +3420,7 @@
 	)
 	(wire
 		(pts
-			(xy 226.06 113.03) (xy 226.06 110.49)
+			(xy 226.06 102.87) (xy 226.06 100.33)
 		)
 		(stroke
 			(width 0)
@@ -3071,7 +3480,7 @@
 	)
 	(wire
 		(pts
-			(xy 199.39 133.35) (xy 199.39 135.89)
+			(xy 199.39 123.19) (xy 199.39 125.73)
 		)
 		(stroke
 			(width 0)
@@ -3088,6 +3497,36 @@
 			(type default)
 		)
 		(uuid "5e50bbf7-1b9d-435c-93bf-a1cda67e7d40")
+	)
+	(wire
+		(pts
+			(xy 236.22 157.48) (xy 236.22 160.02)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5faed337-aa38-4de0-b3a5-bdbe4c78ec65")
+	)
+	(wire
+		(pts
+			(xy 240.03 160.02) (xy 240.03 162.56)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6134b1cf-7012-4eb2-a03d-ea89a0aad78e")
+	)
+	(wire
+		(pts
+			(xy 152.4 120.65) (xy 152.4 118.11)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "63549ff2-77e1-4d10-b9bd-960fa90d4673")
 	)
 	(wire
 		(pts
@@ -3131,7 +3570,17 @@
 	)
 	(wire
 		(pts
-			(xy 170.18 113.03) (xy 170.18 115.57)
+			(xy 144.78 115.57) (xy 152.4 115.57)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6dd99aa1-256f-49d3-b56a-344c60fc9623")
+	)
+	(wire
+		(pts
+			(xy 170.18 102.87) (xy 170.18 105.41)
 		)
 		(stroke
 			(width 0)
@@ -3171,7 +3620,17 @@
 	)
 	(wire
 		(pts
-			(xy 209.55 123.19) (xy 215.9 123.19)
+			(xy 243.84 160.02) (xy 240.03 160.02)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "79701ed7-9d5d-4cdd-9496-38099457fb1e")
+	)
+	(wire
+		(pts
+			(xy 209.55 113.03) (xy 215.9 113.03)
 		)
 		(stroke
 			(width 0)
@@ -3181,7 +3640,7 @@
 	)
 	(wire
 		(pts
-			(xy 226.06 132.08) (xy 228.6 132.08)
+			(xy 226.06 121.92) (xy 228.6 121.92)
 		)
 		(stroke
 			(width 0)
@@ -3191,7 +3650,7 @@
 	)
 	(wire
 		(pts
-			(xy 226.06 110.49) (xy 228.6 110.49)
+			(xy 226.06 100.33) (xy 228.6 100.33)
 		)
 		(stroke
 			(width 0)
@@ -3251,7 +3710,7 @@
 	)
 	(wire
 		(pts
-			(xy 196.85 105.41) (xy 196.85 107.95)
+			(xy 196.85 95.25) (xy 196.85 97.79)
 		)
 		(stroke
 			(width 0)
@@ -3261,7 +3720,7 @@
 	)
 	(wire
 		(pts
-			(xy 226.06 137.16) (xy 226.06 134.62)
+			(xy 226.06 127) (xy 226.06 124.46)
 		)
 		(stroke
 			(width 0)
@@ -3311,6 +3770,16 @@
 	)
 	(wire
 		(pts
+			(xy 251.46 157.48) (xy 251.46 160.02)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a5550e82-63a1-4002-ae59-63d703979f6c")
+	)
+	(wire
+		(pts
 			(xy 107.95 172.72) (xy 114.3 172.72)
 		)
 		(stroke
@@ -3321,7 +3790,7 @@
 	)
 	(wire
 		(pts
-			(xy 226.06 107.95) (xy 228.6 107.95)
+			(xy 226.06 97.79) (xy 228.6 97.79)
 		)
 		(stroke
 			(width 0)
@@ -3361,7 +3830,7 @@
 	)
 	(wire
 		(pts
-			(xy 181.61 118.11) (xy 189.23 118.11)
+			(xy 181.61 107.95) (xy 189.23 107.95)
 		)
 		(stroke
 			(width 0)
@@ -3381,13 +3850,23 @@
 	)
 	(wire
 		(pts
-			(xy 189.23 113.03) (xy 170.18 113.03)
+			(xy 189.23 102.87) (xy 170.18 102.87)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "b219ecac-51f2-4c44-aa45-ecd7ba96604d")
+	)
+	(wire
+		(pts
+			(xy 152.4 118.11) (xy 144.78 118.11)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b5935e9f-6ff8-4c21-a966-eada384267ab")
 	)
 	(wire
 		(pts
@@ -3461,7 +3940,7 @@
 	)
 	(wire
 		(pts
-			(xy 226.06 134.62) (xy 228.6 134.62)
+			(xy 226.06 124.46) (xy 228.6 124.46)
 		)
 		(stroke
 			(width 0)
@@ -3501,7 +3980,7 @@
 	)
 	(wire
 		(pts
-			(xy 209.55 118.11) (xy 215.9 118.11)
+			(xy 209.55 107.95) (xy 215.9 107.95)
 		)
 		(stroke
 			(width 0)
@@ -3651,7 +4130,7 @@
 	)
 	(wire
 		(pts
-			(xy 201.93 105.41) (xy 201.93 107.95)
+			(xy 201.93 95.25) (xy 201.93 97.79)
 		)
 		(stroke
 			(width 0)
@@ -3668,6 +4147,16 @@
 			(type default)
 		)
 		(uuid "fabaac00-28f9-488a-ad1b-f7cae5e8ddcf")
+	)
+	(wire
+		(pts
+			(xy 152.4 113.03) (xy 152.4 115.57)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fdd3ae6a-2b12-4568-9070-368db673c26c")
 	)
 	(image
 		(at 59.69 165.1)
@@ -28966,7 +29455,7 @@
 		(uuid "3fc5d72d-ff6a-4f38-b4ad-25c007e80754")
 	)
 	(label "PWM1"
-		(at 181.61 118.11 0)
+		(at 181.61 107.95 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -28996,7 +29485,7 @@
 		(uuid "48c068ee-7540-413b-a4d7-2e38335d4a59")
 	)
 	(label "PWM2"
-		(at 181.61 123.19 0)
+		(at 181.61 113.03 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -29410,6 +29899,74 @@
 		)
 	)
 	(symbol
+		(lib_id "Mechanical:MountingHole_Pad")
+		(at 251.46 154.94 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "0a6c55ac-406a-4157-81a3-25bd6ca154ee")
+		(property "Reference" "H4"
+			(at 254 152.3999 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole_Pad"
+			(at 254 154.9399 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_5.3mm_M5_Pad"
+			(at 251.46 154.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 251.46 154.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole with connection"
+			(at 251.46 154.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "722e75c1-eaf1-4187-9de2-9cdd81b79f53")
+		)
+		(instances
+			(project "FRCHubController"
+				(path "/cc8c9f6c-494a-4e72-aa94-46b26ce43f93"
+					(reference "H4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 147.32 67.31 270)
 		(unit 1)
@@ -29544,8 +30101,77 @@
 		)
 	)
 	(symbol
+		(lib_id "Connector:Screw_Terminal_01x02")
+		(at 139.7 115.57 0)
+		(mirror y)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "4601e71f-1563-4f7f-b2b4-29ccb353965d")
+		(property "Reference" "J6"
+			(at 139.7 109.22 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "Screw_Terminal_01x02"
+			(at 139.7 111.76 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "282815-2:TE_282815-2"
+			(at 139.7 115.57 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 139.7 115.57 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Generic screw terminal, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 139.7 115.57 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "025527bd-d63d-4d19-baa3-ceae946bcc16")
+		)
+		(pin "2"
+			(uuid "5aa7101f-0405-4649-934d-3a771b4a8663")
+		)
+		(instances
+			(project ""
+				(path "/cc8c9f6c-494a-4e72-aa94-46b26ce43f93"
+					(reference "J6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
-		(at 199.39 135.89 0)
+		(at 199.39 125.73 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -29554,7 +30180,7 @@
 		(fields_autoplaced yes)
 		(uuid "509f3fb4-fde5-42fb-9ce3-e66ef3d251d9")
 		(property "Reference" "#PWR038"
-			(at 199.39 142.24 0)
+			(at 199.39 132.08 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29563,7 +30189,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 199.39 140.97 0)
+			(at 199.39 130.81 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29571,7 +30197,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 199.39 135.89 0)
+			(at 199.39 125.73 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29580,7 +30206,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 199.39 135.89 0)
+			(at 199.39 125.73 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29589,7 +30215,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 199.39 135.89 0)
+			(at 199.39 125.73 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29611,7 +30237,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 226.06 137.16 0)
+		(at 226.06 127 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -29620,7 +30246,7 @@
 		(fields_autoplaced yes)
 		(uuid "57f0736b-50f9-48f5-b4d7-332e054f6bbb")
 		(property "Reference" "#PWR024"
-			(at 226.06 143.51 0)
+			(at 226.06 133.35 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29629,7 +30255,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 226.06 142.24 0)
+			(at 226.06 132.08 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29637,7 +30263,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 226.06 137.16 0)
+			(at 226.06 127 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29646,7 +30272,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 226.06 137.16 0)
+			(at 226.06 127 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29655,7 +30281,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 226.06 137.16 0)
+			(at 226.06 127 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29677,7 +30303,7 @@
 	)
 	(symbol
 		(lib_id "power:+5V")
-		(at 226.06 107.95 90)
+		(at 226.06 97.79 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -29685,7 +30311,7 @@
 		(dnp no)
 		(uuid "62ffff57-8852-4c25-9c29-30ed2dc9b5a1")
 		(property "Reference" "#PWR021"
-			(at 229.87 107.95 0)
+			(at 229.87 97.79 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29694,7 +30320,7 @@
 			)
 		)
 		(property "Value" "+5V"
-			(at 220.98 107.95 90)
+			(at 220.98 97.79 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29702,7 +30328,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 226.06 107.95 0)
+			(at 226.06 97.79 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29711,7 +30337,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 226.06 107.95 0)
+			(at 226.06 97.79 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29720,7 +30346,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+5V\""
-			(at 226.06 107.95 0)
+			(at 226.06 97.79 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29742,7 +30368,7 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_01x03_Socket")
-		(at 233.68 132.08 0)
+		(at 233.68 121.92 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -29751,7 +30377,7 @@
 		(fields_autoplaced yes)
 		(uuid "65f9b510-8541-4b5d-90d2-a2ea3e23838c")
 		(property "Reference" "J3"
-			(at 234.95 130.8099 0)
+			(at 234.95 120.6499 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29760,7 +30386,7 @@
 			)
 		)
 		(property "Value" "Conn_01x03_Socket"
-			(at 234.95 133.3499 0)
+			(at 234.95 123.1899 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29769,7 +30395,7 @@
 			)
 		)
 		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical"
-			(at 233.68 132.08 0)
+			(at 233.68 121.92 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29778,7 +30404,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 233.68 132.08 0)
+			(at 233.68 121.92 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29787,7 +30413,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x03, script generated"
-			(at 233.68 132.08 0)
+			(at 233.68 121.92 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29996,6 +30622,72 @@
 	)
 	(symbol
 		(lib_id "power:GND")
+		(at 152.4 120.65 0)
+		(mirror y)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "6ea416b9-e662-43c4-919d-4b0da8b116bb")
+		(property "Reference" "#PWR044"
+			(at 152.4 127 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 152.4 125.73 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 152.4 120.65 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 152.4 120.65 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 152.4 120.65 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "50676ab6-3f7c-4025-9b87-b2251a201297")
+		)
+		(instances
+			(project "FRCHubController"
+				(path "/cc8c9f6c-494a-4e72-aa94-46b26ce43f93"
+					(reference "#PWR044")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
 		(at 147.32 41.91 270)
 		(unit 1)
 		(exclude_from_sim no)
@@ -30063,7 +30755,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 226.06 113.03 0)
+		(at 226.06 102.87 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -30072,7 +30764,7 @@
 		(fields_autoplaced yes)
 		(uuid "7045ef51-e8db-4a21-b311-a745536710c4")
 		(property "Reference" "#PWR022"
-			(at 226.06 119.38 0)
+			(at 226.06 109.22 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30081,7 +30773,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 226.06 118.11 0)
+			(at 226.06 107.95 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30089,7 +30781,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 226.06 113.03 0)
+			(at 226.06 102.87 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30098,7 +30790,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 226.06 113.03 0)
+			(at 226.06 102.87 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30107,7 +30799,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 226.06 113.03 0)
+			(at 226.06 102.87 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30129,7 +30821,7 @@
 	)
 	(symbol
 		(lib_id "power:+5V")
-		(at 201.93 105.41 0)
+		(at 201.93 95.25 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -30138,7 +30830,7 @@
 		(fields_autoplaced yes)
 		(uuid "71536648-0e7e-4ee1-8f49-769a79d5bbaf")
 		(property "Reference" "#PWR035"
-			(at 201.93 109.22 0)
+			(at 201.93 99.06 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30147,7 +30839,7 @@
 			)
 		)
 		(property "Value" "+5V"
-			(at 201.93 100.33 0)
+			(at 201.93 90.17 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30155,7 +30847,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 201.93 105.41 0)
+			(at 201.93 95.25 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30164,7 +30856,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 201.93 105.41 0)
+			(at 201.93 95.25 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30173,7 +30865,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+5V\""
-			(at 201.93 105.41 0)
+			(at 201.93 95.25 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30194,8 +30886,142 @@
 		)
 	)
 	(symbol
+		(lib_id "Mechanical:MountingHole_Pad")
+		(at 243.84 154.94 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "762055c7-3ab2-44e5-a2ab-9b41570da004")
+		(property "Reference" "H3"
+			(at 246.38 152.3999 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole_Pad"
+			(at 246.38 154.9399 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_5.3mm_M5_Pad"
+			(at 243.84 154.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 243.84 154.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole with connection"
+			(at 243.84 154.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "fd3fa46b-e4fd-4071-860e-9872ebb8666b")
+		)
+		(instances
+			(project "FRCHubController"
+				(path "/cc8c9f6c-494a-4e72-aa94-46b26ce43f93"
+					(reference "H3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 240.03 162.56 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "767119a6-a0af-477f-ab2e-4d6003ac1aa7")
+		(property "Reference" "#PWR045"
+			(at 240.03 168.91 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 240.03 167.64 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 240.03 162.56 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 240.03 162.56 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 240.03 162.56 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "bc9e6f58-2741-4e56-b3e7-f0df767c8f53")
+		)
+		(instances
+			(project "FRCHubController"
+				(path "/cc8c9f6c-494a-4e72-aa94-46b26ce43f93"
+					(reference "#PWR045")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Logic_LevelTranslator:TXB0102DCU")
-		(at 199.39 120.65 0)
+		(at 199.39 110.49 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -30204,7 +31030,7 @@
 		(fields_autoplaced yes)
 		(uuid "7b68e9e4-90b2-45d4-ab0a-3e98afda7897")
 		(property "Reference" "U6"
-			(at 201.5333 133.35 0)
+			(at 201.5333 123.19 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30213,7 +31039,7 @@
 			)
 		)
 		(property "Value" "TXB0102DCU"
-			(at 201.5333 135.89 0)
+			(at 201.5333 125.73 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30222,7 +31048,7 @@
 			)
 		)
 		(property "Footprint" "Package_SO:VSSOP-8_2.3x2mm_P0.5mm"
-			(at 199.39 134.62 0)
+			(at 199.39 124.46 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30231,7 +31057,7 @@
 			)
 		)
 		(property "Datasheet" "http://www.ti.com/lit/ds/symlink/txb0102.pdf"
-			(at 199.39 121.412 0)
+			(at 199.39 111.252 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30240,7 +31066,7 @@
 			)
 		)
 		(property "Description" "2-Bit Bidirectional Voltage-Level Translator With Auto Direction Sensing and ±15-kV ESD Protection, VSSOP-8"
-			(at 199.39 120.65 0)
+			(at 199.39 110.49 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30423,6 +31249,72 @@
 	)
 	(symbol
 		(lib_id "power:+5V")
+		(at 152.4 113.03 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "9bde2bc0-3737-4f7b-bd01-fc8b649b1903")
+		(property "Reference" "#PWR043"
+			(at 152.4 116.84 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+12V"
+			(at 152.4 107.95 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 152.4 113.03 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 152.4 113.03 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+5V\""
+			(at 152.4 113.03 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "19e0ac9b-cef6-49d7-88c5-271cc6fe4f26")
+		)
+		(instances
+			(project "FRCHubController"
+				(path "/cc8c9f6c-494a-4e72-aa94-46b26ce43f93"
+					(reference "#PWR043")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+5V")
 		(at 151.13 24.13 0)
 		(mirror y)
 		(unit 1)
@@ -30490,7 +31382,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 170.18 124.46 0)
+		(at 170.18 114.3 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -30499,7 +31391,7 @@
 		(fields_autoplaced yes)
 		(uuid "a5f85565-cd95-4199-be4f-0b854175f75a")
 		(property "Reference" "#PWR039"
-			(at 170.18 130.81 0)
+			(at 170.18 120.65 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30508,7 +31400,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 170.18 129.54 0)
+			(at 170.18 119.38 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30516,7 +31408,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 170.18 124.46 0)
+			(at 170.18 114.3 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30525,7 +31417,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 170.18 124.46 0)
+			(at 170.18 114.3 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30534,7 +31426,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 170.18 124.46 0)
+			(at 170.18 114.3 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30556,7 +31448,7 @@
 	)
 	(symbol
 		(lib_id "power:+5V")
-		(at 226.06 132.08 90)
+		(at 226.06 121.92 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -30564,7 +31456,7 @@
 		(dnp no)
 		(uuid "a67d627d-4d04-4047-a061-653a0edf2e6f")
 		(property "Reference" "#PWR023"
-			(at 229.87 132.08 0)
+			(at 229.87 121.92 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30573,7 +31465,7 @@
 			)
 		)
 		(property "Value" "+5V"
-			(at 220.98 132.08 90)
+			(at 220.98 121.92 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30581,7 +31473,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 226.06 132.08 0)
+			(at 226.06 121.92 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30590,7 +31482,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 226.06 132.08 0)
+			(at 226.06 121.92 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30599,7 +31491,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+5V\""
-			(at 226.06 132.08 0)
+			(at 226.06 121.92 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30621,7 +31513,7 @@
 	)
 	(symbol
 		(lib_id "power:+5V")
-		(at 196.85 105.41 0)
+		(at 196.85 95.25 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -30630,7 +31522,7 @@
 		(fields_autoplaced yes)
 		(uuid "a6aaa090-c158-42b5-9b7b-613b39cb4359")
 		(property "Reference" "#PWR037"
-			(at 196.85 109.22 0)
+			(at 196.85 99.06 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30639,7 +31531,7 @@
 			)
 		)
 		(property "Value" "+3.3V"
-			(at 196.85 100.33 0)
+			(at 196.85 90.17 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30647,7 +31539,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 196.85 105.41 0)
+			(at 196.85 95.25 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30656,7 +31548,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 196.85 105.41 0)
+			(at 196.85 95.25 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30665,7 +31557,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+5V\""
-			(at 196.85 105.41 0)
+			(at 196.85 95.25 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30820,6 +31712,74 @@
 		)
 	)
 	(symbol
+		(lib_id "Mechanical:MountingHole_Pad")
+		(at 236.22 154.94 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "b55be5c8-ff2f-43f2-9640-e2121d5be178")
+		(property "Reference" "H2"
+			(at 238.76 152.3999 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole_Pad"
+			(at 238.76 154.9399 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_5.3mm_M5_Pad"
+			(at 236.22 154.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 236.22 154.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole with connection"
+			(at 236.22 154.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "fcfd0fc3-97c5-4257-9bf9-2f1d4641dd7b")
+		)
+		(instances
+			(project "FRCHubController"
+				(path "/cc8c9f6c-494a-4e72-aa94-46b26ce43f93"
+					(reference "H2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 133.35 177.8 90)
 		(unit 1)
@@ -30958,7 +31918,7 @@
 	)
 	(symbol
 		(lib_id "Device:R")
-		(at 170.18 119.38 0)
+		(at 170.18 109.22 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -30967,7 +31927,7 @@
 		(fields_autoplaced yes)
 		(uuid "c77124c2-bc05-4276-ac33-b1734f9189a5")
 		(property "Reference" "R1"
-			(at 172.72 118.1099 0)
+			(at 172.72 107.9499 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30976,7 +31936,7 @@
 			)
 		)
 		(property "Value" "100K"
-			(at 172.72 120.6499 0)
+			(at 172.72 110.4899 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30985,7 +31945,7 @@
 			)
 		)
 		(property "Footprint" "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder"
-			(at 168.402 119.38 90)
+			(at 168.402 109.22 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30994,7 +31954,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 170.18 119.38 0)
+			(at 170.18 109.22 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -31003,7 +31963,7 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 170.18 119.38 0)
+			(at 170.18 109.22 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -31094,7 +32054,7 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_01x03_Socket")
-		(at 233.68 107.95 0)
+		(at 233.68 97.79 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -31103,7 +32063,7 @@
 		(fields_autoplaced yes)
 		(uuid "cf0266ab-bb46-4997-bd1c-501af02d86ee")
 		(property "Reference" "J2"
-			(at 234.95 106.6799 0)
+			(at 234.95 96.5199 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -31112,7 +32072,7 @@
 			)
 		)
 		(property "Value" "Conn_01x03_Socket"
-			(at 234.95 109.2199 0)
+			(at 234.95 99.0599 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -31121,7 +32081,7 @@
 			)
 		)
 		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical"
-			(at 233.68 107.95 0)
+			(at 233.68 97.79 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -31130,7 +32090,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 233.68 107.95 0)
+			(at 233.68 97.79 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -31139,7 +32099,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x03, script generated"
-			(at 233.68 107.95 0)
+			(at 233.68 97.79 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -31292,6 +32252,74 @@
 			(project "FRCHubController"
 				(path "/cc8c9f6c-494a-4e72-aa94-46b26ce43f93"
 					(reference "#PWR032")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole_Pad")
+		(at 228.6 154.94 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "e2d5f420-8fec-4584-8a75-e12add96fb57")
+		(property "Reference" "H1"
+			(at 231.14 152.3999 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole_Pad"
+			(at 231.14 154.9399 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_5.3mm_M5_Pad"
+			(at 228.6 154.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 228.6 154.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole with connection"
+			(at 228.6 154.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "1f35f01e-80c4-47e7-9652-f4efab99f0aa")
+		)
+		(instances
+			(project "FRCHubController"
+				(path "/cc8c9f6c-494a-4e72-aa94-46b26ce43f93"
+					(reference "H1")
 					(unit 1)
 				)
 			)
