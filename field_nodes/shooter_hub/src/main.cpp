@@ -64,10 +64,11 @@ void loop()
   static unsigned long lastPrint = 0;
   unsigned long currentMillis = millis();
 
-  // print the IP address every 5 seconds
-  if (currentMillis - lastPrint >= 5000)
+  // print the IP address every 1 seconds
+  if (currentMillis - lastPrint >= 1000)
   {
     Serial.printf("Current Ball Scoring Count: %d\n", app_scoring_getScore());
+    lastPrint = currentMillis;
 #ifdef USE_ETHERNET
     lastPrint = currentMillis;
     deviceIP = preferences.getString("deviceIP", "");
@@ -81,5 +82,5 @@ void loop()
 #endif
   }
 
-  delay(500);
+  delay(250);
 }
