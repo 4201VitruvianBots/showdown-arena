@@ -11,7 +11,7 @@ typedef struct {
 } app_scoring_channelData_t;
 typedef struct {
   uint32_t score;
-  RequestedHubState_E hub_state;
+  RequestedHubState_E hub_state = REQUESTED_HUB_STATE_DEBUG_SCORING_TEST;
   app_scoring_channelData_t channelData[HW_SCORING_BREAK_BEAM_SENSOR_COUNT];
 } app_scoring_data_t;
 
