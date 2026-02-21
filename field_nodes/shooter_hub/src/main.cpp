@@ -1,7 +1,9 @@
 #include "app/app_scoring.hpp"
 #include "app/app_motor.hpp"
+#include "app/app_display.hpp"
 #include "hw/hw_scoring.hpp"
 #include "hw/hw_motor.hpp"
+#include "hw/hw_display.hpp"
 #include "io/io_comms.h"
 
 #include <Arduino.h>
@@ -23,16 +25,20 @@ extern String deviceGWIP;
 extern bool useDHCP;
 
 
+
+
 // Setup function
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(115200); 
 
   hw_scoring_init();
   hw_motor_init();
+  hw_display_init();
 
   app_scoring_reset();
   app_motor_reset();
+  app_display_init();
 
   // Initialize preferences
   preferences.begin("settings", false);
@@ -67,7 +73,9 @@ void loop()
   // print the IP address every 1 seconds
   if (currentMillis - lastPrint >= 1000)
   {
-    Serial.printf("Current Ball Scoring Count: %d\n", app_scoring_getScore());
+    uint32_t currentScore = app_scoring_getScore();
+    Serial.printf("Current Ball Scoring Count: %d\n", currentScore);
+    app_display_updateScore(currentScore);
     lastPrint = currentMillis;
 #ifdef USE_ETHERNET
     lastPrint = currentMillis;
