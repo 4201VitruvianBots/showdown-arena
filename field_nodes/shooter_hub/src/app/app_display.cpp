@@ -27,17 +27,17 @@ void app_display_updateScore(uint32_t score)
     char scoreStr[12];
     snprintf(scoreStr, sizeof(scoreStr), "%lu", (unsigned long)score);
 
-    // Use text size 4 (~24x32 px per character) for readability on 64x64
-    panel->setTextSize(4);
+    // Use text size 3 (~18x24 px per character) to fit up to 3 digits on 64px wide panel
+    panel->setTextSize(3);
     panel->setTextWrap(false);
     panel->setTextColor(panel->color565(255, 255, 255)); // white text
 
     // Centre the text on the 64x64 panel
-    // Each char at size 4 is 6*4=24 px wide, 8*4=32 px tall
-    int textWidth = strlen(scoreStr) * 24;
+    // Each char at size 3 is 6*3=18 px wide, 8*3=24 px tall
+    int textWidth = strlen(scoreStr) * 18;
     int x = (64 - textWidth) / 2;
     if (x < 0) x = 0;
-    int y = (64 - 32) / 2; // vertically centred
+    int y = (64 - 24) / 2; // vertically centred
 
     panel->setCursor(x, y);
     panel->print(scoreStr);
