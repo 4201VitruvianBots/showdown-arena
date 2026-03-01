@@ -11,6 +11,11 @@ void app_display_init(void)
     panel->fillScreen(panel->color565(0, 0, 0));
 }
 
+void draw_centered_string(const String &buf, int x, int y)
+{
+
+}
+
 void app_display_updateScore(uint32_t score)
 {
     // Only redraw when the score actually changes
@@ -27,18 +32,16 @@ void app_display_updateScore(uint32_t score)
     char scoreStr[12];
     snprintf(scoreStr, sizeof(scoreStr), "%lu", (unsigned long)score);
 
-    // Use text size 4 (~24x32 px per character) for readability on 64x64
-    panel->setTextSize(4);
+    // Use text size 3 (12x16 px per character) for readability on 64x64
+    panel->setTextSize(3);
     panel->setTextWrap(false);
     panel->setTextColor(panel->color565(255, 255, 255)); // white text
 
     // Centre the text on the 64x64 panel
-    // Each char at size 4 is 6*4=24 px wide, 8*4=32 px tall
-    int textWidth = strlen(scoreStr) * 24;
-    int x = (64 - textWidth) / 2;
-    if (x < 0) x = 0;
-    int y = (64 - 32) / 2; // vertically centred
 
-    panel->setCursor(x, y);
+    int16_t x1, y1;
+    uint16_t w, h;
+    panel->getTextBounds(scoreStr, 32, 32, &x1, &y1, &w, &h); //calc width of new string
+    panel->setCursor(32 - w / 2, 32 - h / 2);
     panel->print(scoreStr);
 }

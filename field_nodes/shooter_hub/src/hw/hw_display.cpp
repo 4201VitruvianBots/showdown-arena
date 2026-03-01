@@ -33,7 +33,7 @@ void hw_display_init(void)
 
     dma_display = new MatrixPanel_I2S_DMA(mxconfig);
     dma_display->begin();
-    dma_display->setBrightness8(90);
+    dma_display->setBrightness8(127); // Set brightness to 50%
     dma_display->clearScreen();
 }
 

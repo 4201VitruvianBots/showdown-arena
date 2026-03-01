@@ -1,0 +1,27 @@
+### Footprint positions - created on 2026-02-11T00:12:11-0800 ###
+### Printed by KiCad version 9.0.2
+## Unit = mm, Angle = deg.
+## Side : top
+# Ref     Val                          Package                                           PosX       PosY       Rot  Side
+J1        Conn_01x03_Socket            JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical         132.0800   -71.9074   90.0000  top
+J2        Conn_01x03_Socket            PinHeader_1x03_P2.54mm_Vertical               129.5400   -79.4328   90.0000  top
+J3        Conn_01x03_Socket            PinHeader_1x03_P2.54mm_Vertical               129.5400   -91.4400   90.0000  top
+J4        Barrel_Jack_Switch_Pin3Ring  BarrelJack_GCT_DCJ200-10-A_Horizontal         138.9126   -58.3500  180.0000  top
+J5        Conn_02x08_Odd_Even          PinHeader_2x08_P2.54mm_Vertical               129.5400   -99.0600    0.0000  top
+J6        Screw_Terminal_01x02         TE_282815-2                                   162.5000  -122.9625  180.0000  top
+R1        100K                         R_0603_1608Metric_Pad0.98x0.95mm_HandSolder   139.1666   -81.2546    0.0000  top
+R3        330                          R_0603_1608Metric_Pad0.98x0.95mm_HandSolder   170.7612   -56.2916   90.0000  top
+R4        1K                           R_0603_1608Metric_Pad0.98x0.95mm_HandSolder   170.7612   -59.7916  -90.0000  top
+R5        330                          R_0603_1608Metric_Pad0.98x0.95mm_HandSolder   170.7612   -75.2916   90.0000  top
+R6        1K                           R_0603_1608Metric_Pad0.98x0.95mm_HandSolder   170.7612   -78.7916  -90.0000  top
+R7        330                          R_0603_1608Metric_Pad0.98x0.95mm_HandSolder   170.7612   -94.2916   90.0000  top
+R8        1K                           R_0603_1608Metric_Pad0.98x0.95mm_HandSolder   170.7612   -97.7916  -90.0000  top
+R9        330                          R_0603_1608Metric_Pad0.98x0.95mm_HandSolder   170.7612  -113.2916   90.0000  top
+R10       1K                           R_0603_1608Metric_Pad0.98x0.95mm_HandSolder   170.7612  -116.7916  -90.0000  top
+U1        ~                            ESP32-S3-ETH                                  157.2920   -64.4800    0.0000  top
+U2        Conn_01x05_Socket            M12                                           178.2612   -60.7916  -90.0000  top
+U3        Conn_01x05_Socket            M12                                           178.2612   -79.7916  -90.0000  top
+U4        Conn_01x05_Socket            M12                                           178.2612   -98.7916  -90.0000  top
+U5        Conn_01x05_Socket            M12                                           178.2612  -117.7916  -90.0000  top
+U6        TXB0102DCU                   VSSOP-8_2.3x2mm_P0.5mm                        137.4140   -85.3440   90.0000  top
+## End

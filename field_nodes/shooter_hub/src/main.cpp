@@ -90,5 +90,5 @@ void loop()
 #endif
   }
 
-  delay(250);
+  delay(100);
 }
