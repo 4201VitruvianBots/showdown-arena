@@ -1,195 +1,477 @@
 // Copyright 20## Team ###. All Rights Reserved.
 // Author: cpapplefamily@gmail.com (Corey Applegate)
 //
-// Alternate IO handlers for the ###.
+// ESP32 IO handlers using UDP JSON communication.
+// Replaces the previous TCP/HTTP-based health checking and data exchange.
+//
+// Architecture:
+//   - Go listens on udpListenPort (5301) for JSON messages from ESP32s (many→1)
+//   - Go sends JSON commands to each ESP32 IP on udpSendPort (5300) (1→many)
+//   - Each ESP32 identifies itself by "role" in its messages
+//   - Health is determined by receiving any valid message within the timeout window
 
 package plc
 
 import (
-	//"github.com/Team254/cheesy-arena/game"
-	//"github.com/Team254/cheesy-arena/model"
-	//"encoding/json"
-	//"net/http"
-	"time"
+	"encoding/json"
 	"log"
 	"net"
 	"strings"
+	"sync"
+	"time"
 )
 
+const (
+	udpListenPort      = 5301 // Port Go listens on for ESP32→Go messages
+	udpSendPort        = 5300 // Port ESP32s listen on for Go→ESP32 commands
+	udpHealthTimeoutMs = 2000 // Mark unhealthy if no message received for this long
+	udpSendIntervalMs  = 100  // How often to send commands to ESP32s
+	udpReadBufferSize  = 2048
+)
+
+// Esp32 defines the interface for ESP32 communication.
 type Esp32 interface {
 	Run()
+
+	// Health configuration
 	IsScoreTableIOEnabled() bool
 	IsRedEstopsEnabled() bool
 	IsBlueEstopsEnabled() bool
 	IsScoreTableHealthy() bool
 	IsRedEstopsHealthy() bool
 	IsBlueEstopsHealthy() bool
-	SetScoreTableAddress(string) 
-	SetRedAllianceStationEstopAddress(string) 
-	SetBlueAllianceStationEstopAddress(string) 
+
+	// Address configuration
+	SetScoreTableAddress(string)
+	SetRedAllianceStationEstopAddress(string)
+	SetBlueAllianceStationEstopAddress(string)
+
+	// Data received from ESP32s
+	GetFieldEStop() bool
+	GetTeamEStops() ([3]bool, [3]bool)
+	GetTeamAStops() ([3]bool, [3]bool)
+	GetRedHubScore() int
+	GetBlueHubScore() int
+
+	// Commands to send to ESP32s
+	SendHubCommand(hubState string, motorDuty float64, redLight, blueLight bool)
+	SendStackLights(red, blue, orange, green, buzzer bool)
+	SendMatchState(state int)
 }
 
+// --- Inbound message types (ESP32 → Go) ---
+
+// EstopStationState represents one driver station's stop button states.
+type EstopStationState struct {
+	EStop bool `json:"eStop"`
+	AStop bool `json:"aStop"`
+}
+
+// EstopStateMessage is sent by ESP32s to report estop/astop button states.
+type EstopStateMessage struct {
+	Type       string              `json:"type"` // "estop_state"
+	Role       string              `json:"role"` // "RED_ALLIANCE", "BLUE_ALLIANCE", "FMS_TABLE"
+	FieldEStop bool                `json:"fieldEStop"`
+	Stations   [3]EstopStationState `json:"stations"`
+}
+
+// ScoreReportMessage is sent by ESP32s to report scoring data.
+type ScoreReportMessage struct {
+	Type  string `json:"type"`  // "score_report"
+	Role  string `json:"role"`  // "RED_HUB", "BLUE_HUB"
+	Score int    `json:"score"`
+}
+
+// --- Outbound message types (Go → ESP32) ---
+
+// HubCommandMessage commands a scoring hub ESP32.
+type HubCommandMessage struct {
+	Type      string  `json:"type"`      // "hub_command"
+	HubState  string  `json:"hubState"`  // "DISABLED", "SCORING_ACTIVE", "SCORING_INACTIVE", etc.
+	MotorDuty float64 `json:"motorDuty"`
+	RedLight  bool    `json:"redLight"`
+	BlueLight bool    `json:"blueLight"`
+}
+
+// StackLightsMessage commands the score table stack lights.
+type StackLightsMessage struct {
+	Type   string `json:"type"` // "stack_lights"
+	Red    bool   `json:"red"`
+	Blue   bool   `json:"blue"`
+	Orange bool   `json:"orange"`
+	Green  bool   `json:"green"`
+	Buzzer bool   `json:"buzzer"`
+}
+
+// MatchStateMessage sends the current match state to ESP32s.
+type MatchStateMessage struct {
+	Type  string `json:"type"`  // "match_state"
+	State int    `json:"state"`
+}
+
+// InboundMessage is used for initial JSON unmarshalling to determine message type.
+type InboundMessage struct {
+	Type string `json:"type"`
+}
+
+// Esp32IO manages bidirectional UDP communication with ESP32 field nodes.
 type Esp32IO struct {
-	ScoreTableIP		string
-	RedAllianceEstopsIP		string
-	BlueAllianceEstopsIP		string
-	scoreTableHealthy 	bool
-	RedEstopsHealthy 	bool
-	BlueEstopsHealthy 	bool
-}
-const LoopPeriodMs = 1000 // Define the loop period in milliseconds
+	// Configured IP addresses
+	ScoreTableIP         string
+	RedAllianceEstopsIP  string
+	BlueAllianceEstopsIP string
 
+	// Health tracking — last time a valid message was received from each node
+	scoreTableLastHeard     time.Time
+	redEstopsLastHeard      time.Time
+	blueEstopsLastHeard     time.Time
 
-// RequestPayload represents the structure of the incoming POST data.
-type RequestPayload struct {
-	Channel int  `json:"channel"`
-	State   bool `json:"state"`
+	// Received state from ESP32s
+	fieldEStop    bool
+	redEStops     [3]bool
+	redAStops     [3]bool
+	blueEStops    [3]bool
+	blueAStops    [3]bool
+	redHubScore   int
+	blueHubScore  int
+
+	// Outbound command state (set by the arena, sent periodically)
+	hubCommand  HubCommandMessage
+	stackLights StackLightsMessage
+	matchState  MatchStateMessage
+
+	// UDP connection
+	listenConn *net.UDPConn
+
+	mu sync.Mutex
 }
 
 func (esp32 *Esp32IO) SetScoreTableAddress(address string) {
 	address = strings.TrimSpace(address)
-	if address == "" {
-		esp32.ScoreTableIP = address
-        return
-    }
-    if net.ParseIP(address) == nil {
-        log.Printf("Invalid Score Table IP address: %s", address)
-        return
-    }
-    esp32.ScoreTableIP = address
-    log.Printf("Set Score Table IP to: %s", esp32.ScoreTableIP)
-}
-func (esp32 *Esp32IO) SetRedAllianceStationEstopAddress(address string) {
-	address = strings.TrimSpace(address)
-	if address == "" {
-		esp32.RedAllianceEstopsIP = address
-        return
-    }
-    if net.ParseIP(address) == nil {
-        log.Printf("Invalid Red Alliance Estops IP address: %s", address)
-        return
-    }
-    esp32.RedAllianceEstopsIP = address
-	log.Printf("Red Alliance Estops IP to: %s", esp32.RedAllianceEstopsIP)
-}
-func (esp32 *Esp32IO) SetBlueAllianceStationEstopAddress(address string) {
-	address = strings.TrimSpace(address)
-	if address == "" {
-		esp32.BlueAllianceEstopsIP = address
-        return
-    }
-    if net.ParseIP(address) == nil {
-        log.Printf("Invalid Blue Alliance Estops IP address: %s", address)
-        return
-    }
-    esp32.BlueAllianceEstopsIP = address
-	log.Printf("Blue Alliance Estops IP to: %s", esp32.BlueAllianceEstopsIP)
-}
-
-// Checks if an IP address is reachable by attempting a TCP connection.
-func isDevicePresent(ip string, port string) error {
-    address := net.JoinHostPort(ip, port)
-    conn, err := net.DialTimeout("tcp", address, time.Second*2)
-    if err != nil {
-        //log.Printf("Device not reachable at %s: %v", address, err)
-        return err
-    } 
-    conn.Close()
-    return err
-}
-
-// Run starts the ESP32 IO monitoring loop.
-func (esp32 *Esp32IO) Run() {
-	for {
-		// Check if the Score Table Estops are reachable.
-		if !esp32.IsScoreTableIOEnabled() {
-			// If the Score Table is not enabled, don't check it.
-			esp32.scoreTableHealthy = false
-		} else {
-			//log.Println("ScoreTable Check")
-			err := isDevicePresent(esp32.ScoreTableIP, "80")
-			if err != nil {
-				log.Printf("Score Table not reachable at %s: %v", esp32.ScoreTableIP, err)
-				time.Sleep(time.Second * plcRetryIntevalSec)
-				esp32.scoreTableHealthy = false
-				continue
-				}else{
-					if (!esp32.scoreTableHealthy){
-						log.Printf("Score Table Connected at: %s", esp32.ScoreTableIP)
-					}
-					esp32.scoreTableHealthy = true
-				}
-			}
-			// Check if the Red Alliance Estops are healthy.
-			if !esp32.IsRedEstopsEnabled() {
-				// If the Red Alliance Estops are not enabled, don't check them.
-				esp32.RedEstopsHealthy= false
-				} else {
-			//log.Println("Red Estops IO Check")
-			err := isDevicePresent(esp32.RedAllianceEstopsIP, "80")
-			if err != nil {
-				log.Printf("Red Alliance Estops not reachable at %s: %v", esp32.RedAllianceEstopsIP, err)
-				time.Sleep(time.Second * plcRetryIntevalSec)
-				esp32.RedEstopsHealthy = false
-				continue
-				}else{
-					if (!esp32.RedEstopsHealthy){
-						log.Printf("Red Estops Connected at: %s ", esp32.RedAllianceEstopsIP)
-					}
-					esp32.RedEstopsHealthy = true
-				}
-			}
-			// Check if the Blue Alliance Estops are healthy.
-			if !esp32.IsBlueEstopsEnabled() {
-				// If the Blue Alliance Estops are not enabled, don't check them.
-				esp32.BlueEstopsHealthy = false
-				} else {
-			//log.Println("Blue Estops IO Check")
-			err := isDevicePresent(esp32.BlueAllianceEstopsIP, "80")
-			if err != nil {
-				log.Printf("Blue Alliance Estops not reachable at %s: %v", esp32.BlueAllianceEstopsIP, err)
-				time.Sleep(time.Second * plcRetryIntevalSec)
-				esp32.BlueEstopsHealthy = false
-				continue
-			}else{
-				if (!esp32.BlueEstopsHealthy){
-					log.Printf("Blue Estops Connected at: %s ", esp32.BlueAllianceEstopsIP)
-				}
-				esp32.BlueEstopsHealthy = true
-			}
-		}
-		
-		startTime := time.Now()
-		time.Sleep(time.Until(startTime.Add(time.Millisecond * LoopPeriodMs)))
+	if address != "" && net.ParseIP(address) == nil {
+		log.Printf("Invalid Score Table IP address: %s", address)
+		return
+	}
+	esp32.mu.Lock()
+	esp32.ScoreTableIP = address
+	esp32.mu.Unlock()
+	if address != "" {
+		log.Printf("Set Score Table IP to: %s", address)
 	}
 }
 
-// Returns whether the alternate IO is enabled.
+func (esp32 *Esp32IO) SetRedAllianceStationEstopAddress(address string) {
+	address = strings.TrimSpace(address)
+	if address != "" && net.ParseIP(address) == nil {
+		log.Printf("Invalid Red Alliance Estops IP address: %s", address)
+		return
+	}
+	esp32.mu.Lock()
+	esp32.RedAllianceEstopsIP = address
+	esp32.mu.Unlock()
+	if address != "" {
+		log.Printf("Set Red Alliance Estops IP to: %s", address)
+	}
+}
+
+func (esp32 *Esp32IO) SetBlueAllianceStationEstopAddress(address string) {
+	address = strings.TrimSpace(address)
+	if address != "" && net.ParseIP(address) == nil {
+		log.Printf("Invalid Blue Alliance Estops IP address: %s", address)
+		return
+	}
+	esp32.mu.Lock()
+	esp32.BlueAllianceEstopsIP = address
+	esp32.mu.Unlock()
+	if address != "" {
+		log.Printf("Set Blue Alliance Estops IP to: %s", address)
+	}
+}
+
+// --- Health / Enabled checks ---
+
 func (esp32 *Esp32IO) IsScoreTableIOEnabled() bool {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
 	return esp32.ScoreTableIP != ""
 }
 
-// Returns whether the alternate IO is enabled.
 func (esp32 *Esp32IO) IsRedEstopsEnabled() bool {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
 	return esp32.RedAllianceEstopsIP != ""
 }
 
-// Returns whether the alternate IO is enabled.
 func (esp32 *Esp32IO) IsBlueEstopsEnabled() bool {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
 	return esp32.BlueAllianceEstopsIP != ""
 }
 
-// Returns the health status of the alternate IO.
 func (esp32 *Esp32IO) IsScoreTableHealthy() bool {
-	return esp32.scoreTableHealthy
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	if esp32.ScoreTableIP == "" {
+		return false
+	}
+	return time.Since(esp32.scoreTableLastHeard) < time.Millisecond*udpHealthTimeoutMs
 }
 
-// Returns the health status of the alternate IO.
 func (esp32 *Esp32IO) IsRedEstopsHealthy() bool {
-	return esp32.RedEstopsHealthy
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	if esp32.RedAllianceEstopsIP == "" {
+		return false
+	}
+	return time.Since(esp32.redEstopsLastHeard) < time.Millisecond*udpHealthTimeoutMs
 }
 
-// Returns the health status of the alternate IO.
 func (esp32 *Esp32IO) IsBlueEstopsHealthy() bool {
-	return esp32.BlueEstopsHealthy
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	if esp32.BlueAllianceEstopsIP == "" {
+		return false
+	}
+	return time.Since(esp32.blueEstopsLastHeard) < time.Millisecond*udpHealthTimeoutMs
+}
+
+// --- Data accessors (read state received from ESP32s) ---
+
+func (esp32 *Esp32IO) GetFieldEStop() bool {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	return esp32.fieldEStop
+}
+
+func (esp32 *Esp32IO) GetTeamEStops() ([3]bool, [3]bool) {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	return esp32.redEStops, esp32.blueEStops
+}
+
+func (esp32 *Esp32IO) GetTeamAStops() ([3]bool, [3]bool) {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	return esp32.redAStops, esp32.blueAStops
+}
+
+func (esp32 *Esp32IO) GetRedHubScore() int {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	return esp32.redHubScore
+}
+
+func (esp32 *Esp32IO) GetBlueHubScore() int {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	return esp32.blueHubScore
+}
+
+// --- Command setters (called by arena, sent to ESP32s periodically) ---
+
+func (esp32 *Esp32IO) SendHubCommand(hubState string, motorDuty float64, redLight, blueLight bool) {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	esp32.hubCommand = HubCommandMessage{
+		Type:      "hub_command",
+		HubState:  hubState,
+		MotorDuty: motorDuty,
+		RedLight:  redLight,
+		BlueLight: blueLight,
+	}
+}
+
+func (esp32 *Esp32IO) SendStackLights(red, blue, orange, green, buzzer bool) {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	esp32.stackLights = StackLightsMessage{
+		Type:   "stack_lights",
+		Red:    red,
+		Blue:   blue,
+		Orange: orange,
+		Green:  green,
+		Buzzer: buzzer,
+	}
+}
+
+func (esp32 *Esp32IO) SendMatchState(state int) {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	esp32.matchState = MatchStateMessage{
+		Type:  "match_state",
+		State: state,
+	}
+}
+
+// --- Main run loop ---
+
+// Run starts the UDP listener and periodic sender. Should be called as a goroutine.
+func (esp32 *Esp32IO) Run() {
+	// Initialize default command states
+	esp32.hubCommand = HubCommandMessage{Type: "hub_command", HubState: "DISABLED"}
+	esp32.stackLights = StackLightsMessage{Type: "stack_lights"}
+	esp32.matchState = MatchStateMessage{Type: "match_state"}
+
+	// Start the UDP listener
+	go esp32.runListener()
+
+	// Periodically send commands to all configured ESP32s
+	for {
+		startTime := time.Now()
+		esp32.sendCommandsToAll()
+		elapsed := time.Since(startTime)
+		if remaining := time.Millisecond*udpSendIntervalMs - elapsed; remaining > 0 {
+			time.Sleep(remaining)
+		}
+	}
+}
+
+// runListener listens for incoming UDP messages from ESP32s on udpListenPort.
+func (esp32 *Esp32IO) runListener() {
+	addr := &net.UDPAddr{Port: udpListenPort}
+	var err error
+	esp32.listenConn, err = net.ListenUDP("udp", addr)
+	if err != nil {
+		log.Printf("ESP32 UDP: Failed to listen on port %d: %v", udpListenPort, err)
+		return
+	}
+	defer esp32.listenConn.Close()
+	log.Printf("ESP32 UDP: Listening on port %d", udpListenPort)
+
+	buf := make([]byte, udpReadBufferSize)
+	for {
+		n, remoteAddr, err := esp32.listenConn.ReadFromUDP(buf)
+		if err != nil {
+			log.Printf("ESP32 UDP: Read error: %v", err)
+			continue
+		}
+
+		esp32.handleInboundMessage(buf[:n], remoteAddr)
+	}
+}
+
+// handleInboundMessage parses and processes a single inbound UDP message.
+func (esp32 *Esp32IO) handleInboundMessage(data []byte, remoteAddr *net.UDPAddr) {
+	// Peek at the type field
+	var msg InboundMessage
+	if err := json.Unmarshal(data, &msg); err != nil {
+		log.Printf("ESP32 UDP: Invalid JSON from %s: %v", remoteAddr, err)
+		return
+	}
+
+	switch msg.Type {
+	case "estop_state":
+		var estopMsg EstopStateMessage
+		if err := json.Unmarshal(data, &estopMsg); err != nil {
+			log.Printf("ESP32 UDP: Failed to parse estop_state from %s: %v", remoteAddr, err)
+			return
+		}
+		esp32.handleEstopState(&estopMsg, remoteAddr)
+
+	case "score_report":
+		var scoreMsg ScoreReportMessage
+		if err := json.Unmarshal(data, &scoreMsg); err != nil {
+			log.Printf("ESP32 UDP: Failed to parse score_report from %s: %v", remoteAddr, err)
+			return
+		}
+		esp32.handleScoreReport(&scoreMsg, remoteAddr)
+
+	default:
+		log.Printf("ESP32 UDP: Unknown message type '%s' from %s", msg.Type, remoteAddr)
+	}
+}
+
+// handleEstopState processes an estop state message from an ESP32.
+func (esp32 *Esp32IO) handleEstopState(msg *EstopStateMessage, remoteAddr *net.UDPAddr) {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+
+	switch msg.Role {
+	case "FMS_TABLE":
+		esp32.fieldEStop = msg.FieldEStop
+		esp32.scoreTableLastHeard = time.Now()
+	case "RED_ALLIANCE":
+		for i := 0; i < 3; i++ {
+			esp32.redEStops[i] = msg.Stations[i].EStop
+			esp32.redAStops[i] = msg.Stations[i].AStop
+		}
+		esp32.redEstopsLastHeard = time.Now()
+	case "BLUE_ALLIANCE":
+		for i := 0; i < 3; i++ {
+			esp32.blueEStops[i] = msg.Stations[i].EStop
+			esp32.blueAStops[i] = msg.Stations[i].AStop
+		}
+		esp32.blueEstopsLastHeard = time.Now()
+	default:
+		log.Printf("ESP32 UDP: Unknown estop role '%s' from %s", msg.Role, remoteAddr)
+	}
+}
+
+// handleScoreReport processes a score report message from an ESP32.
+func (esp32 *Esp32IO) handleScoreReport(msg *ScoreReportMessage, remoteAddr *net.UDPAddr) {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+
+	switch msg.Role {
+	case "RED_HUB":
+		esp32.redHubScore = msg.Score
+		// Update health for score table (the hub ESP32 is co-located)
+		esp32.scoreTableLastHeard = time.Now()
+	case "BLUE_HUB":
+		esp32.blueHubScore = msg.Score
+		esp32.scoreTableLastHeard = time.Now()
+	default:
+		log.Printf("ESP32 UDP: Unknown score role '%s' from %s", msg.Role, remoteAddr)
+	}
+}
+
+// sendCommandsToAll sends the current command state to all configured ESP32s.
+func (esp32 *Esp32IO) sendCommandsToAll() {
+	esp32.mu.Lock()
+	hubCmd := esp32.hubCommand
+	stackCmd := esp32.stackLights
+	matchCmd := esp32.matchState
+	scoreTableIP := esp32.ScoreTableIP
+	redEstopsIP := esp32.RedAllianceEstopsIP
+	blueEstopsIP := esp32.BlueAllianceEstopsIP
+	esp32.mu.Unlock()
+
+	// Send hub command + match state to the score table ESP32 (which also handles the hub)
+	if scoreTableIP != "" {
+		esp32.sendJSON(scoreTableIP, hubCmd)
+		esp32.sendJSON(scoreTableIP, matchCmd)
+		esp32.sendJSON(scoreTableIP, stackCmd)
+	}
+
+	// Send stack lights + match state to alliance estop ESP32s
+	if redEstopsIP != "" {
+		esp32.sendJSON(redEstopsIP, stackCmd)
+		esp32.sendJSON(redEstopsIP, matchCmd)
+	}
+	if blueEstopsIP != "" {
+		esp32.sendJSON(blueEstopsIP, stackCmd)
+		esp32.sendJSON(blueEstopsIP, matchCmd)
+	}
+}
+
+// sendJSON marshals a message to JSON and sends it via UDP to the given IP.
+func (esp32 *Esp32IO) sendJSON(ip string, msg interface{}) {
+	data, err := json.Marshal(msg)
+	if err != nil {
+		log.Printf("ESP32 UDP: Failed to marshal message for %s: %v", ip, err)
+		return
+	}
+
+	addr := &net.UDPAddr{IP: net.ParseIP(ip), Port: udpSendPort}
+	conn, err := net.DialUDP("udp", nil, addr)
+	if err != nil {
+		log.Printf("ESP32 UDP: Failed to dial %s: %v", ip, err)
+		return
+	}
+	defer conn.Close()
+
+	_, err = conn.Write(data)
+	if err != nil {
+		log.Printf("ESP32 UDP: Failed to send to %s: %v", ip, err)
+	}
 }
