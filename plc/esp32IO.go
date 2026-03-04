@@ -29,7 +29,7 @@ import (
 const (
 	udpListenPort      = 5301 // Port Go listens on for ESP32→Go messages
 	udpSendPort        = 5300 // Port ESP32s listen on for Go→ESP32 commands
-	udpHealthTimeoutMs = 2000 // Mark unhealthy if no message received for this long
+	udpHealthTimeoutMs = 1000 // Mark unhealthy if no message received for this long
 	udpSendIntervalMs  = 100  // How often to send commands to ESP32s (10Hz)
 	udpReadBufferSize  = 2048
 )
@@ -67,16 +67,18 @@ type Esp32 interface {
 	GetBlueHubScore() int
 
 	// Commands to send to ESP32s
-	SendRedHubCommand(hubState string, motorDuty float64, redLight, blueLight bool)
-	SendBlueHubCommand(hubState string, motorDuty float64, redLight, blueLight bool)
+	SetRedHubState(hubState string, motorDuty float64)
+	SetBlueHubState(hubState string, motorDuty float64)
+	SetRedHubLedPattern(ledPattern string)
+	SetBlueHubLedPattern(ledPattern string)
 	SendStackLights(red, blue, orange, green, buzzer bool)
 	SendMatchState(state int)
 
 	// Getters for current outbound command state (for debugging/display)
 	GetStackLights() (red, blue, orange, green, buzzer bool)
 	GetMatchState() int
-	GetRedHubCommand() (hubState string, motorDuty float64, redLight, blueLight bool)
-	GetBlueHubCommand() (hubState string, motorDuty float64, redLight, blueLight bool)
+	GetRedHubCommand() (hubState string, motorDuty float64, ledPattern string)
+	GetBlueHubCommand() (hubState string, motorDuty float64, ledPattern string)
 }
 
 // --- Inbound message (ESP32 → Go): "node_status" ---
@@ -109,16 +111,15 @@ type NodeStatusMessage struct {
 //   - Score table reads: stackRed/Blue/Orange/Green, stackBuzzer, matchState
 type NodeCommandMessage struct {
 	Type        string  `json:"type"`     // Always "node_command"
-	HubState    string  `json:"hubState"` // "DISABLED", "SCORING_ACTIVE", "SCORING_INACTIVE", etc.
+	HubState    string  `json:"hubState,omitempty"` // "DISABLED", "SCORING_ACTIVE", "SCORING_INACTIVE", etc.
 	MotorDuty   float64 `json:"motorDuty"`
-	RedLight    bool    `json:"redLight"`
-	BlueLight   bool    `json:"blueLight"`
+	LedPattern  string  `json:"ledPattern,omitempty"`
 	StackRed    bool    `json:"stackRed"`
 	StackBlue   bool    `json:"stackBlue"`
 	StackOrange bool    `json:"stackOrange"`
 	StackGreen  bool    `json:"stackGreen"`
 	StackBuzzer bool    `json:"stackBuzzer"`
-	MatchState  int     `json:"matchState"`
+	MatchState      int     `json:"matchState"`
 }
 
 // InboundMessage is used for initial JSON unmarshalling to determine message type.
@@ -152,10 +153,11 @@ type Esp32IO struct {
 	blueHubScore int
 
 	// Outbound command state (set by the arena, sent periodically)
-	redHubCommand  NodeCommandMessage
-	blueHubCommand NodeCommandMessage
-	stackLights    NodeCommandMessage // Shared stack light + match state for estop/table nodes
-	matchState     int
+	redHubCommand   NodeCommandMessage
+	blueHubCommand  NodeCommandMessage
+	stackLights     NodeCommandMessage // Shared stack light + match state for estop/table nodes
+	matchState      int
+	fieldResetLight bool
 
 	// UDP connection
 	listenConn *net.UDPConn
@@ -312,24 +314,65 @@ func (esp32 *Esp32IO) IsBlueHubHealthy() bool {
 	return time.Since(esp32.blueHubLastHeard) < time.Millisecond*udpHealthTimeoutMs
 }
 
+func (esp32 *Esp32IO) SetFieldResetLight(state bool) {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	esp32.fieldResetLight = state
+}
+
 // --- Data accessors (read state received from ESP32s) ---
 
 func (esp32 *Esp32IO) GetFieldEStop() bool {
 	esp32.mu.Lock()
 	defer esp32.mu.Unlock()
-	return !esp32.fieldEStop
+	if esp32.ScoreTableIP == "" {
+		return false
+	} else if time.Since(esp32.scoreTableLastHeard) >= time.Millisecond*udpHealthTimeoutMs {
+		return true
+	}
+	return esp32.fieldEStop
 }
 
 func (esp32 *Esp32IO) GetTeamEStops() ([3]bool, [3]bool) {
 	esp32.mu.Lock()
 	defer esp32.mu.Unlock()
-	return esp32.redEStops, esp32.blueEStops
+
+	redEStops := esp32.redEStops
+	if esp32.RedAllianceEstopsIP == "" {
+		redEStops = [3]bool{false, false, false}
+	} else if time.Since(esp32.redEstopsLastHeard) >= time.Millisecond*udpHealthTimeoutMs {
+		redEStops = [3]bool{true, true, true}
+	}
+
+	blueEStops := esp32.blueEStops
+	if esp32.BlueAllianceEstopsIP == "" {
+		blueEStops = [3]bool{false, false, false}
+	} else if time.Since(esp32.blueEstopsLastHeard) >= time.Millisecond*udpHealthTimeoutMs {
+		blueEStops = [3]bool{true, true, true}
+	}
+
+	return redEStops, blueEStops
 }
 
 func (esp32 *Esp32IO) GetTeamAStops() ([3]bool, [3]bool) {
 	esp32.mu.Lock()
 	defer esp32.mu.Unlock()
-	return esp32.redAStops, esp32.blueAStops
+
+	redAStops := esp32.redAStops
+	if esp32.RedAllianceEstopsIP == "" {
+		redAStops = [3]bool{false, false, false}
+	} else if time.Since(esp32.redEstopsLastHeard) >= time.Millisecond*udpHealthTimeoutMs {
+		redAStops = [3]bool{true, true, true}
+	}
+
+	blueAStops := esp32.blueAStops
+	if esp32.BlueAllianceEstopsIP == "" {
+		blueAStops = [3]bool{false, false, false}
+	} else if time.Since(esp32.blueEstopsLastHeard) >= time.Millisecond*udpHealthTimeoutMs {
+		blueAStops = [3]bool{true, true, true}
+	}
+
+	return redAStops, blueAStops
 }
 
 func (esp32 *Esp32IO) GetRedHubScore() int {
@@ -346,28 +389,30 @@ func (esp32 *Esp32IO) GetBlueHubScore() int {
 
 // --- Command setters (called by arena, sent to ESP32s periodically) ---
 
-func (esp32 *Esp32IO) SendRedHubCommand(hubState string, motorDuty float64, redLight, blueLight bool) {
+func (esp32 *Esp32IO) SetRedHubState(hubState string, motorDuty float64) {
 	esp32.mu.Lock()
 	defer esp32.mu.Unlock()
-	esp32.redHubCommand = NodeCommandMessage{
-		Type:      "node_command",
-		HubState:  hubState,
-		MotorDuty: motorDuty,
-		RedLight:  redLight,
-		BlueLight: blueLight,
-	}
+	esp32.redHubCommand.HubState = hubState
+	esp32.redHubCommand.MotorDuty = motorDuty
 }
 
-func (esp32 *Esp32IO) SendBlueHubCommand(hubState string, motorDuty float64, redLight, blueLight bool) {
+func (esp32 *Esp32IO) SetBlueHubState(hubState string, motorDuty float64) {
 	esp32.mu.Lock()
 	defer esp32.mu.Unlock()
-	esp32.blueHubCommand = NodeCommandMessage{
-		Type:      "node_command",
-		HubState:  hubState,
-		MotorDuty: motorDuty,
-		RedLight:  redLight,
-		BlueLight: blueLight,
-	}
+	esp32.blueHubCommand.HubState = hubState
+	esp32.blueHubCommand.MotorDuty = motorDuty
+}
+
+func (esp32 *Esp32IO) SetRedHubLedPattern(ledPattern string) {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	esp32.redHubCommand.LedPattern = ledPattern
+}
+
+func (esp32 *Esp32IO) SetBlueHubLedPattern(ledPattern string) {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	esp32.blueHubCommand.LedPattern = ledPattern
 }
 
 func (esp32 *Esp32IO) SendStackLights(red, blue, orange, green, buzzer bool) {
@@ -401,18 +446,16 @@ func (esp32 *Esp32IO) GetMatchState() int {
 	return esp32.matchState
 }
 
-func (esp32 *Esp32IO) GetRedHubCommand() (hubState string, motorDuty float64, redLight, blueLight bool) {
+func (esp32 *Esp32IO) GetRedHubCommand() (hubState string, motorDuty float64, ledPattern string) {
 	esp32.mu.Lock()
 	defer esp32.mu.Unlock()
-	return esp32.redHubCommand.HubState, esp32.redHubCommand.MotorDuty,
-		esp32.redHubCommand.RedLight, esp32.redHubCommand.BlueLight
+	return esp32.redHubCommand.HubState, esp32.redHubCommand.MotorDuty, esp32.redHubCommand.LedPattern
 }
 
-func (esp32 *Esp32IO) GetBlueHubCommand() (hubState string, motorDuty float64, redLight, blueLight bool) {
+func (esp32 *Esp32IO) GetBlueHubCommand() (hubState string, motorDuty float64, ledPattern string) {
 	esp32.mu.Lock()
 	defer esp32.mu.Unlock()
-	return esp32.blueHubCommand.HubState, esp32.blueHubCommand.MotorDuty,
-		esp32.blueHubCommand.RedLight, esp32.blueHubCommand.BlueLight
+	return esp32.blueHubCommand.HubState, esp32.blueHubCommand.MotorDuty, esp32.blueHubCommand.LedPattern
 }
 
 // --- Main run loop ---

@@ -54,14 +54,9 @@ String udp_comms_getHubState(void);
 float udp_comms_getMotorDuty(void);
 
 /**
- * @brief Get the red hub light state from the Go server.
+ * @brief Get the LED pattern from the Go server.
  */
-bool udp_comms_getRedLight(void);
-
-/**
- * @brief Get the blue hub light state from the Go server.
- */
-bool udp_comms_getBlueLight(void);
+String udp_comms_getLedPattern(void);
 
 /**
  * @brief Get the match state received from the Go server.

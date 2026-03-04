@@ -39,6 +39,7 @@ var handleMatchLoad = function (data) {
   if (station !== "") {
     var team = data.Teams[station];
     if (team) {
+      $("body").attr("data-alliance", station[0]);
       $("#teamNumber").text(team.Id);
       $("#teamNameText").attr("data-alliance-bg", station[0]).text(team.Nickname);
 
@@ -103,18 +104,30 @@ var handleArenaStatus = function (data) {
 
 // Handles a websocket message to update the match time countdown.
 var handleMatchTime = function (data) {
+  if (station !== "" && (station[0] === "R" || station[0] === "B")) {
+    var rearText = (station[0] === "R") ? data.RedRearText : data.BlueRearText;
+    if (rearText) {
+      $("#timeRemaining").text(rearText).addClass("rear-text");
+      $("#match").attr("data-state", matchStates[data.MatchState]).addClass("rear-text-active");
+      return;
+    }
+  }
+
   translateMatchTime(data, function (matchState, matchStateText, countdownSec) {
     if (station[0] === "N") {
       // Pin the state for a non-alliance display to an in-match state, so as to always show time or score.
       matchState = "TELEOP_PERIOD";
+    }
+    if (isNaN(countdownSec)) {
+      return;
     }
     var countdownString = String(countdownSec % 60);
     if (countdownString.length === 1) {
       countdownString = "0" + countdownString;
     }
     countdownString = Math.floor(countdownSec / 60) + ":" + countdownString;
-    $("#timeRemaining").text(countdownString);
-    $("#match").attr("data-state", matchState);
+    $("#timeRemaining").text(countdownString).removeClass("rear-text");
+    $("#match").attr("data-state", matchState).removeClass("rear-text-active");
   });
 };
 

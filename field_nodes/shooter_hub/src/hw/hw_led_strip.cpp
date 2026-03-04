@@ -22,3 +22,9 @@ void hw_led_strip_off(void) {
 void hw_led_strip_show(void) {
     FastLED.show();
 }
+
+void hw_led_strip_setPixel(int index, uint8_t r, uint8_t g, uint8_t b) {
+    if (index >= 0 && index < HW_LED_STRIP_NUM_LEDS) {
+        leds[index] = CRGB(r, g, b);
+    }
+}

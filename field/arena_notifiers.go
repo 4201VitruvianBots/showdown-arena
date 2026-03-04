@@ -6,6 +6,7 @@
 package field
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/Team254/cheesy-arena/game"
@@ -37,6 +38,8 @@ type ArenaNotifiers struct {
 type MatchTimeMessage struct {
 	MatchState
 	MatchTimeSec int
+	RedRearText  string
+	BlueRearText string
 }
 
 type audienceAllianceScoreFields struct {
@@ -93,8 +96,8 @@ func (arena *Arena) generateArenaStatusMessage() any {
 	redAStops, blueAStops := arena.Esp32.GetTeamAStops()
 	stackRed, stackBlue, stackOrange, stackGreen, stackBuzzer := arena.Esp32.GetStackLights()
 	matchState := arena.Esp32.GetMatchState()
-	redHubState, redMotorDuty, redRedLight, redBlueLight := arena.Esp32.GetRedHubCommand()
-	blueHubState, blueMotorDuty, blueRedLight, blueBlueLight := arena.Esp32.GetBlueHubCommand()
+	redHubState, redMotorDuty, redLedPattern := arena.Esp32.GetRedHubCommand()
+	blueHubState, blueMotorDuty, blueLedPattern := arena.Esp32.GetBlueHubCommand()
 
 	return &struct {
 		MatchId          int
@@ -150,8 +153,7 @@ func (arena *Arena) generateArenaStatusMessage() any {
 			Score      int
 			HubState   string
 			MotorDuty  float64
-			RedLight   bool
-			BlueLight  bool
+			LedPattern string
 			MatchState int
 		}
 		BlueHubIO struct {
@@ -160,8 +162,7 @@ func (arena *Arena) generateArenaStatusMessage() any {
 			Score      int
 			HubState   string
 			MotorDuty  float64
-			RedLight   bool
-			BlueLight  bool
+			LedPattern string
 			MatchState int
 		}
 	}{
@@ -249,8 +250,7 @@ func (arena *Arena) generateArenaStatusMessage() any {
 			Score      int
 			HubState   string
 			MotorDuty  float64
-			RedLight   bool
-			BlueLight  bool
+			LedPattern string
 			MatchState int
 		}{
 			Configured: arena.Esp32.IsRedHubEnabled(),
@@ -258,8 +258,7 @@ func (arena *Arena) generateArenaStatusMessage() any {
 			Score:      arena.Esp32.GetRedHubScore(),
 			HubState:   redHubState,
 			MotorDuty:  redMotorDuty,
-			RedLight:   redRedLight,
-			BlueLight:  redBlueLight,
+			LedPattern: redLedPattern,
 			MatchState: matchState,
 		},
 		BlueHubIO: struct {
@@ -268,8 +267,7 @@ func (arena *Arena) generateArenaStatusMessage() any {
 			Score      int
 			HubState   string
 			MotorDuty  float64
-			RedLight   bool
-			BlueLight  bool
+			LedPattern string
 			MatchState int
 		}{
 			Configured: arena.Esp32.IsBlueHubEnabled(),
@@ -277,8 +275,7 @@ func (arena *Arena) generateArenaStatusMessage() any {
 			Score:      arena.Esp32.GetBlueHubScore(),
 			HubState:   blueHubState,
 			MotorDuty:  blueMotorDuty,
-			RedLight:   blueRedLight,
-			BlueLight:  blueBlueLight,
+			LedPattern: blueLedPattern,
 			MatchState: matchState,
 		},
 	}
@@ -374,7 +371,41 @@ func (arena *Arena) GenerateMatchLoadMessage() any {
 }
 
 func (arena *Arena) generateMatchTimeMessage() any {
-	return MatchTimeMessage{arena.MatchState, int(arena.MatchTimeSec())}
+	matchTimeSec := arena.MatchTimeSec()
+	matchTimeSecInt := int(matchTimeSec)
+
+	// Generate the countdown string.
+	var countdownSec int
+	switch arena.MatchState {
+	case PreMatch:
+		if arena.AudienceDisplayMode == "allianceSelection" {
+			countdownSec = arena.AllianceSelectionTimeRemainingSec
+		} else {
+			countdownSec = game.MatchTiming.AutoDurationSec
+		}
+	case StartMatch, WarmupPeriod:
+		countdownSec = game.MatchTiming.AutoDurationSec
+	case AutoPeriod:
+		countdownSec = game.MatchTiming.WarmupDurationSec + game.MatchTiming.AutoDurationSec - matchTimeSecInt
+	case TeleopPeriod:
+		countdownSec = game.MatchTiming.WarmupDurationSec + game.MatchTiming.AutoDurationSec +
+			game.MatchTiming.TeleopDurationSec + game.MatchTiming.PauseDurationSec - matchTimeSecInt
+	case TimeoutActive:
+		countdownSec = game.MatchTiming.TimeoutDurationSec - matchTimeSecInt
+	default:
+		countdownSec = 0
+	}
+	if countdownSec < 0 {
+		countdownSec = 0
+	}
+	countdown := fmt.Sprintf("%d:%02d", countdownSec/60, countdownSec%60)
+
+	return MatchTimeMessage{
+		MatchState:   arena.MatchState,
+		MatchTimeSec: matchTimeSecInt,
+		RedRearText:  generateInMatchTeamRearText(arena, true, countdown, matchTimeSec),
+		BlueRearText: generateInMatchTeamRearText(arena, false, countdown, matchTimeSec),
+	}
 }
 
 func (arena *Arena) generateMatchTimingMessage() any {

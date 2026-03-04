@@ -1,11 +1,5 @@
-{{/*
-Copyright 2018 Team 254. All Rights Reserved.
-Author: pat@patfairbank.com (Patrick Fairbank)
-
-UI for testing the game sounds and the LEDs and PLC connected to the field.
-*/}}
-{{define "title"}}Field Testing{{end}}
-{{define "body"}}
+{{/* Copyright 2018 Team 254. All Rights Reserved. Author: pat@patfairbank.com (Patrick Fairbank) UI for testing the
+game sounds and the LEDs and PLC connected to the field. */}} {{define "title"}}Field Testing{{end}} {{define "body"}}
 <div class="row justify-content-center">
   <div class="col-lg-3">
     <div class="card card-body bg-body-tertiary">
@@ -27,13 +21,15 @@ UI for testing the game sounds and the LEDs and PLC connected to the field.
         </tr>
         <tr>
           <td class="bg-body-tertiary">1 (Red)</td>
-          <td class="bg-body-tertiary" id="hubLedRed">rgb({{.RedHubColor.R}}, {{.RedHubColor.G}}, {{.RedHubColor.B}})
+          <td class="bg-body-tertiary" id="hubLedRed">
+            rgb({{.RedHubColor.R}}, {{.RedHubColor.G}}, {{.RedHubColor.B}})
           </td>
         </tr>
         <tr>
           <td class="bg-body-tertiary">2 (Blue)</td>
-          <td class="bg-body-tertiary" id="hubLedBlue">rgb({{.BlueHubColor.R}}, {{.BlueHubColor.G}},
-            {{.BlueHubColor.B}})</td>
+          <td class="bg-body-tertiary" id="hubLedBlue">
+            rgb({{.BlueHubColor.R}}, {{.BlueHubColor.G}}, {{.BlueHubColor.B}})
+          </td>
         </tr>
       </table>
     </div>
@@ -352,12 +348,8 @@ UI for testing the game sounds and the LEDs and PLC connected to the field.
               <td class="bg-body-tertiary" id="espRedHubMotorDuty">0</td>
             </tr>
             <tr>
-              <td class="bg-body-tertiary">Red Light</td>
-              <td class="bg-body-tertiary" id="espRedHubRedLight" data-plc-value="false"></td>
-            </tr>
-            <tr>
-              <td class="bg-body-tertiary">Blue Light</td>
-              <td class="bg-body-tertiary" id="espRedHubBlueLight" data-plc-value="false"></td>
+              <td class="bg-body-tertiary">Led Pattern</td>
+              <td class="bg-body-tertiary" id="espRedHubLedPattern">—</td>
             </tr>
             <tr>
               <td class="bg-body-tertiary">Match State</td>
@@ -410,12 +402,8 @@ UI for testing the game sounds and the LEDs and PLC connected to the field.
               <td class="bg-body-tertiary" id="espBlueHubMotorDuty">0</td>
             </tr>
             <tr>
-              <td class="bg-body-tertiary">Red Light</td>
-              <td class="bg-body-tertiary" id="espBlueHubRedLight" data-plc-value="false"></td>
-            </tr>
-            <tr>
-              <td class="bg-body-tertiary">Blue Light</td>
-              <td class="bg-body-tertiary" id="espBlueHubBlueLight" data-plc-value="false"></td>
+              <td class="bg-body-tertiary">Led Pattern</td>
+              <td class="bg-body-tertiary" id="espBlueHubLedPattern">—</td>
             </tr>
             <tr>
               <td class="bg-body-tertiary">Match State</td>
@@ -425,10 +413,8 @@ UI for testing the game sounds and the LEDs and PLC connected to the field.
         </div>
       </div>
     </div>
-
   </div>
 </div>
-{{end}}
-{{define "script"}}
+{{end}} {{define "script"}}
 <script src="/static/js/setup_field_testing.js"></script>
 {{end}}

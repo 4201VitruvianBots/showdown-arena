@@ -88,8 +88,7 @@ var handleArenaStatus = function (data) {
   $("#espRedHubScore").text(rh.Score);
   $("#espRedHubHubState").text(rh.HubState);
   $("#espRedHubMotorDuty").text(rh.MotorDuty.toFixed(2));
-  setBoolCell("#espRedHubRedLight", rh.RedLight);
-  setBoolCell("#espRedHubBlueLight", rh.BlueLight);
+  $("#espRedHubLedPattern").text(rh.LedPattern);
   $("#espRedHubMatchState").text(rh.MatchState);
 
   // Blue Hub
@@ -98,8 +97,7 @@ var handleArenaStatus = function (data) {
   $("#espBlueHubScore").text(bh.Score);
   $("#espBlueHubHubState").text(bh.HubState);
   $("#espBlueHubMotorDuty").text(bh.MotorDuty.toFixed(2));
-  setBoolCell("#espBlueHubRedLight", bh.RedLight);
-  setBoolCell("#espBlueHubBlueLight", bh.BlueLight);
+  $("#espBlueHubLedPattern").text(bh.LedPattern);
   $("#espBlueHubMatchState").text(bh.MatchState);
 };
 

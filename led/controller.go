@@ -44,8 +44,9 @@ var (
 	ColorOff    = Color{0, 0, 0}     // Off (inactive hub)
 	ColorGreen  = Color{0, 255, 0}   // Green (field safe)
 	ColorPurple = Color{128, 0, 128} // Purple (counting after match)
-	ColorRed    = Color{255, 0, 0}   // Red (red alliance active hub)
-	ColorBlue   = Color{0, 0, 255}   // Blue (blue alliance active hub)
+	ColorRed    = Color{255, 0, 0}     // Red (red alliance active hub)
+	ColorBlue   = Color{0, 0, 255}     // Blue (blue alliance active hub)
+	ColorWhite  = Color{255, 255, 255} // White (chasing overlay / assessment period)
 )
 
 // Controller implements the DMX light control for sACN E1.31 over Ethernet.
@@ -94,17 +95,26 @@ func (dmx *Controller) SetChase(color Color, matchTimeSec float64) {
 	dmx.chaseIndex = int(timeInCycle * NumSegments)
 
 	for i := 0; i < NumSegments; i++ {
-		dmx.colors[i] = ColorOff
+		dmx.colors[i] = color
 	}
 
-	// 33, 66, 100, 100, 100, 66, 33 chase pattern
-	dmx.colors[(dmx.chaseIndex-3+NumSegments)%NumSegments] = color.Scale(0.33)
-	dmx.colors[(dmx.chaseIndex-2+NumSegments)%NumSegments] = color.Scale(0.66)
-	dmx.colors[(dmx.chaseIndex-1+NumSegments)%NumSegments] = color
-	dmx.colors[dmx.chaseIndex] = color
-	dmx.colors[(dmx.chaseIndex+1)%NumSegments] = color
-	dmx.colors[(dmx.chaseIndex+2)%NumSegments] = color.Scale(0.66)
-	dmx.colors[(dmx.chaseIndex+3)%NumSegments] = color.Scale(0.33)
+	// Helper to blend overlay (white) over base (alliance color)
+	blend := func(base, overlay Color, mix float64) Color {
+		return Color{
+			R: uint8(float64(base.R)*(1-mix) + float64(overlay.R)*mix),
+			G: uint8(float64(base.G)*(1-mix) + float64(overlay.G)*mix),
+			B: uint8(float64(base.B)*(1-mix) + float64(overlay.B)*mix),
+		}
+	}
+
+	// 33, 66, 100, 100, 100, 66, 33 chase pattern of WHITE overlaid on ALLIANCE COLOR
+	dmx.colors[(dmx.chaseIndex-3+NumSegments)%NumSegments] = blend(color, ColorWhite, 0.33)
+	dmx.colors[(dmx.chaseIndex-2+NumSegments)%NumSegments] = blend(color, ColorWhite, 0.66)
+	dmx.colors[(dmx.chaseIndex-1+NumSegments)%NumSegments] = ColorWhite
+	dmx.colors[dmx.chaseIndex] = ColorWhite
+	dmx.colors[(dmx.chaseIndex+1)%NumSegments] = ColorWhite
+	dmx.colors[(dmx.chaseIndex+2)%NumSegments] = blend(color, ColorWhite, 0.66)
+	dmx.colors[(dmx.chaseIndex+3)%NumSegments] = blend(color, ColorWhite, 0.33)
 }
 
 func (dmx *Controller) GetColor() Color {

@@ -22,6 +22,11 @@ void hw_led_strip_setAll(uint8_t r, uint8_t g, uint8_t b);
 void hw_led_strip_off(void);
 
 /**
+ * @brief Set a single LED to a specific color
+ */
+void hw_led_strip_setPixel(int index, uint8_t r, uint8_t g, uint8_t b);
+
+/**
  * @brief Call FastLED.show() to push updates to the strip.
  */
 void hw_led_strip_show(void);

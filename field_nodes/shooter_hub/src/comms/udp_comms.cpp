@@ -15,8 +15,7 @@ static unsigned long lastCommandReceivedMs = 0;
 // Received command state (from node_command messages)
 static String receivedHubState = "DISABLED";
 static float receivedMotorDuty = 0.0f;
-static bool receivedRedLight = false;
-static bool receivedBlueLight = false;
+static String receivedLedPattern = "off";
 static int receivedMatchState = 0;
 static bool receivedStackRed = false;
 static bool receivedStackBlue = false;
@@ -25,7 +24,7 @@ static bool receivedStackGreen = false;
 static bool receivedStackBuzzer = false;
 
 // JSON parsing buffer
-static StaticJsonDocument<512> inDoc;
+static StaticJsonDocument<1024> inDoc;
 
 // --- Internal handler for unified node_command ---
 
@@ -37,11 +36,8 @@ static void handleNodeCommand(JsonDocument &doc) {
   if (doc.containsKey("motorDuty")) {
     receivedMotorDuty = doc["motorDuty"].as<float>();
   }
-  if (doc.containsKey("redLight")) {
-    receivedRedLight = doc["redLight"].as<bool>();
-  }
-  if (doc.containsKey("blueLight")) {
-    receivedBlueLight = doc["blueLight"].as<bool>();
+  if (doc.containsKey("ledPattern")) {
+    receivedLedPattern = doc["ledPattern"].as<String>();
   }
 
   // Stack light fields (relevant for estop/table roles)
@@ -84,7 +80,7 @@ void udp_comms_run(void) {
 
   int packetSize = udp.parsePacket();
   while (packetSize > 0) {
-    char buf[512];
+    char buf[1024];
     int len = udp.read(buf, sizeof(buf) - 1);
     if (len > 0) {
       buf[len] = '\0';
@@ -179,12 +175,8 @@ float udp_comms_getMotorDuty(void) {
   return receivedMotorDuty;
 }
 
-bool udp_comms_getRedLight(void) {
-  return receivedRedLight;
-}
-
-bool udp_comms_getBlueLight(void) {
-  return receivedBlueLight;
+String udp_comms_getLedPattern(void) {
+  return receivedLedPattern;
 }
 
 int udp_comms_getMatchState(void) {
