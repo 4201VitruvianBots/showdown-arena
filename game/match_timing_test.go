@@ -192,3 +192,69 @@ func TestIsBlueHubActiveForScoring(t *testing.T) {
 	assert.Equal(t, true, IsBlueHubActiveForScoring(teleopEnd+2.9, true))  // 2.9 sec after match (grace period)
 	assert.Equal(t, false, IsBlueHubActiveForScoring(teleopEnd+3.1, true)) // 3.1 sec after match (no longer grace period)
 }
+
+func TestGetShiftIndicator(t *testing.T) {
+	teleopStart := float64(MatchTiming.WarmupDurationSec + MatchTiming.AutoDurationSec + MatchTiming.PauseDurationSec)
+	teleopEnd := teleopStart + float64(MatchTiming.TeleopDurationSec)
+	transitionEnd := teleopStart + float64(TransitionDurationSec)
+	endGameStart := teleopEnd - float64(EndGameDurationSec)
+
+	// Auto period
+	assert.Equal(t, "A", GetShiftIndicator(0, true, true))
+	assert.Equal(t, "A", GetShiftIndicator(15, true, true))
+	assert.Equal(t, "A", GetShiftIndicator(22, true, true)) // Pause
+
+	// Transition period
+	assert.Equal(t, "T", GetShiftIndicator(teleopStart, true, true))
+	assert.Equal(t, "T", GetShiftIndicator(teleopStart+5, true, true))
+	assert.Equal(t, "T", GetShiftIndicator(transitionEnd-0.1, true, true))
+
+	// Alternating shifts - Red active
+	assert.Equal(t, "R", GetShiftIndicator(transitionEnd+5, true, false))
+	// Alternating shifts - Blue active
+	assert.Equal(t, "B", GetShiftIndicator(transitionEnd+5, false, true))
+
+	// End Game
+	assert.Equal(t, "E", GetShiftIndicator(endGameStart, true, true))
+	assert.Equal(t, "E", GetShiftIndicator(teleopEnd-1, true, true))
+
+	// After match
+	assert.Equal(t, "", GetShiftIndicator(teleopEnd, false, false))
+	assert.Equal(t, "", GetShiftIndicator(teleopEnd+10, false, false))
+}
+
+func TestGetShiftTimeRemaining(t *testing.T) {
+	teleopStart := float64(MatchTiming.WarmupDurationSec + MatchTiming.AutoDurationSec + MatchTiming.PauseDurationSec)
+	teleopEnd := teleopStart + float64(MatchTiming.TeleopDurationSec)
+	transitionEnd := teleopStart + float64(TransitionDurationSec)
+
+	// Auto period: 20 seconds total (warmup=0, auto=20)
+	assert.Equal(t, 20, GetShiftTimeRemaining(0))
+	assert.Equal(t, 10, GetShiftTimeRemaining(10))
+	assert.Equal(t, 1, GetShiftTimeRemaining(19))
+
+	// Pause period: shows time remaining until teleop starts
+	assert.Equal(t, 3, GetShiftTimeRemaining(20))
+	assert.Equal(t, 1, GetShiftTimeRemaining(22))
+
+	// Transition period: 10 seconds
+	assert.Equal(t, 10, GetShiftTimeRemaining(teleopStart))
+	assert.Equal(t, 5, GetShiftTimeRemaining(teleopStart+5))
+	assert.Equal(t, 1, GetShiftTimeRemaining(transitionEnd-1))
+
+	// Alternating shifts: 25 seconds each
+	assert.Equal(t, 25, GetShiftTimeRemaining(transitionEnd))       // Start of shift 0
+	assert.Equal(t, 18, GetShiftTimeRemaining(transitionEnd+7))     // 7 sec into shift 0
+	assert.Equal(t, 25, GetShiftTimeRemaining(transitionEnd+25))    // Start of shift 1
+	assert.Equal(t, 15, GetShiftTimeRemaining(transitionEnd+25+10)) // 10 sec into shift 1
+
+	// End Game: 30 seconds (teleopEnd-30 to teleopEnd)
+	endGameStart := teleopEnd - float64(EndGameDurationSec)
+	assert.Equal(t, 30, GetShiftTimeRemaining(endGameStart))
+	assert.Equal(t, 15, GetShiftTimeRemaining(endGameStart+15))
+	assert.Equal(t, 1, GetShiftTimeRemaining(teleopEnd-1))
+
+	// After match
+	assert.Equal(t, 0, GetShiftTimeRemaining(teleopEnd))
+	assert.Equal(t, 0, GetShiftTimeRemaining(teleopEnd+10))
+}

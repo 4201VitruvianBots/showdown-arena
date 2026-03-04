@@ -45,6 +45,8 @@ void setupWebServer()
                       "<option value=\"RED_ALLIANCE\"" + String(deviceRole == "RED_ALLIANCE" ? " selected" : "") + ">RED_ALLIANCE</option>"
                       "<option value=\"BLUE_ALLIANCE\"" + String(deviceRole == "BLUE_ALLIANCE" ? " selected" : "") + ">BLUE_ALLIANCE</option>"
                       "<option value=\"FMS_TABLE\"" + String(deviceRole == "FMS_TABLE" ? " selected" : "") + ">FMS_TABLE</option>"
+                      "<option value=\"RED_HUB\"" + String(deviceRole == "RED_HUB" ? " selected" : "") + ">RED_HUB</option>"
+                      "<option value=\"BLUE_HUB\"" + String(deviceRole == "BLUE_HUB" ? " selected" : "") + ">BLUE_HUB</option>"
                       "</select><br><br>"
                       "<input type=\"checkbox\" id=\"dhcp\" name=\"dhcp\" " + String(useDHCP ? "checked" : "") + " onchange=\"toggleIPInput()\">"
                       "<label for=\"dhcp\">Use DHCP</label><br><br>"

@@ -20,18 +20,18 @@ void udp_comms_init(const String &arenaIP);
 void udp_comms_run(void);
 
 /**
- * @brief Send estop/astop button states to the Go server.
- * @param states The current button states.
- * @param role Device role: "RED_ALLIANCE", "BLUE_ALLIANCE", or "FMS_TABLE"
+ * @brief Send a unified node_status message to the Go server.
+ *
+ * All device types send this same message; the Go server routes by "role".
+ *   - RED_ALLIANCE / BLUE_ALLIANCE: populates stations[]
+ *   - FMS_TABLE: populates fieldEStop
+ *   - RED_HUB / BLUE_HUB: populates score
+ *
+ * @param states  Button states (relevant for estop/alliance roles).
+ * @param score   Hub score count (relevant for hub roles).
+ * @param role    Device role string.
  */
-void udp_comms_sendEstopState(const ButtonStates &states, const String &role);
-
-/**
- * @brief Send a score report to the Go server.
- * @param score The current score count.
- * @param role Score role: "RED_HUB" or "BLUE_HUB"
- */
-void udp_comms_sendScoreReport(uint32_t score, const String &role);
+void udp_comms_sendNodeStatus(const ButtonStates &states, uint32_t score, const String &role);
 
 /**
  * @brief Check if the Go server is sending us commands (heartbeat).
@@ -67,5 +67,14 @@ bool udp_comms_getBlueLight(void);
  * @brief Get the match state received from the Go server.
  */
 int udp_comms_getMatchState(void);
+
+/**
+ * @brief Get the stack light states from the Go server.
+ */
+bool udp_comms_getStackRed(void);
+bool udp_comms_getStackBlue(void);
+bool udp_comms_getStackOrange(void);
+bool udp_comms_getStackGreen(void);
+bool udp_comms_getStackBuzzer(void);
 
 #endif // UDP_COMMS_HPP

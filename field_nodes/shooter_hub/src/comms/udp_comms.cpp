@@ -12,19 +12,25 @@ static bool initialized = false;
 static unsigned long lastCommandReceivedMs = 0;
 #define UDP_HEALTH_TIMEOUT_MS 2000
 
-// Received command state
+// Received command state (from node_command messages)
 static String receivedHubState = "DISABLED";
 static float receivedMotorDuty = 0.0f;
 static bool receivedRedLight = false;
 static bool receivedBlueLight = false;
 static int receivedMatchState = 0;
+static bool receivedStackRed = false;
+static bool receivedStackBlue = false;
+static bool receivedStackOrange = false;
+static bool receivedStackGreen = false;
+static bool receivedStackBuzzer = false;
 
 // JSON parsing buffer
 static StaticJsonDocument<512> inDoc;
 
-// --- Internal handlers ---
+// --- Internal handler for unified node_command ---
 
-static void handleHubCommand(JsonDocument &doc) {
+static void handleNodeCommand(JsonDocument &doc) {
+  // Hub fields (relevant for hub roles)
   if (doc.containsKey("hubState")) {
     receivedHubState = doc["hubState"].as<String>();
   }
@@ -37,18 +43,27 @@ static void handleHubCommand(JsonDocument &doc) {
   if (doc.containsKey("blueLight")) {
     receivedBlueLight = doc["blueLight"].as<bool>();
   }
-}
 
-static void handleStackLights(JsonDocument &doc) {
-  // Stack lights are handled by the score table ESP32
-  // For now, just log receipt. Hardware actuation can be added later.
-  // The data is available but the physical stack lights may be
-  // driven by the PLC or a separate mechanism.
-}
+  // Stack light fields (relevant for estop/table roles)
+  if (doc.containsKey("stackRed")) {
+    receivedStackRed = doc["stackRed"].as<bool>();
+  }
+  if (doc.containsKey("stackBlue")) {
+    receivedStackBlue = doc["stackBlue"].as<bool>();
+  }
+  if (doc.containsKey("stackOrange")) {
+    receivedStackOrange = doc["stackOrange"].as<bool>();
+  }
+  if (doc.containsKey("stackGreen")) {
+    receivedStackGreen = doc["stackGreen"].as<bool>();
+  }
+  if (doc.containsKey("stackBuzzer")) {
+    receivedStackBuzzer = doc["stackBuzzer"].as<bool>();
+  }
 
-static void handleMatchState(JsonDocument &doc) {
-  if (doc.containsKey("state")) {
-    receivedMatchState = doc["state"].as<int>();
+  // Match state (relevant for all roles)
+  if (doc.containsKey("matchState")) {
+    receivedMatchState = doc["matchState"].as<int>();
   }
 }
 
@@ -73,7 +88,7 @@ void udp_comms_run(void) {
     int len = udp.read(buf, sizeof(buf) - 1);
     if (len > 0) {
       buf[len] = '\0';
-
+      inDoc.clear();
       DeserializationError err = deserializeJson(inDoc, buf);
       if (err) {
         Serial.printf("UDP Comms: JSON parse error: %s\n", err.c_str());
@@ -82,12 +97,8 @@ void udp_comms_run(void) {
         lastCommandReceivedMs = millis();
 
         String msgType = inDoc["type"].as<String>();
-        if (msgType == "hub_command") {
-          handleHubCommand(inDoc);
-        } else if (msgType == "stack_lights") {
-          handleStackLights(inDoc);
-        } else if (msgType == "match_state") {
-          handleMatchState(inDoc);
+        if (msgType == "node_command") {
+          handleNodeCommand(inDoc);
         } else {
           Serial.printf("UDP Comms: Unknown message type: %s\n", msgType.c_str());
         }
@@ -98,28 +109,25 @@ void udp_comms_run(void) {
   }
 }
 
-void udp_comms_sendEstopState(const ButtonStates &states, const String &role) {
+void udp_comms_sendNodeStatus(const ButtonStates &states, uint32_t score, const String &role) {
   if (!initialized || !isEthernetConnected()) {
     return;
   }
 
-  StaticJsonDocument<300> doc;
-  doc["type"] = "estop_state";
+  StaticJsonDocument<384> doc;
+  doc["type"] = "node_status";
   doc["role"] = role;
 
+  // Field estop (relevant for FMS_TABLE)
   if (role == "FMS_TABLE") {
     doc["fieldEStop"] = states.fieldEStop;
-    // FMS_TABLE doesn't have station estops, but send empty array for consistency
-    JsonArray stations = doc.createNestedArray("stations");
-    for (int i = 0; i < 3; i++) {
-      JsonObject station = stations.createNestedObject();
-      station["eStop"] = true;  // Default: not pressed
-      station["aStop"] = false;
-    }
   } else {
-    doc["fieldEStop"] = false; // Alliance stations don't report field estop
-    JsonArray stations = doc.createNestedArray("stations");
+    doc["fieldEStop"] = false;
+  }
 
+  // Station estops (relevant for alliance roles)
+  JsonArray stations = doc.createNestedArray("stations");
+  if (role == "RED_ALLIANCE" || role == "BLUE_ALLIANCE") {
     JsonObject s1 = stations.createNestedObject();
     s1["eStop"] = states.station1EStop;
     s1["aStop"] = states.station1AStop;
@@ -131,30 +139,19 @@ void udp_comms_sendEstopState(const ButtonStates &states, const String &role) {
     JsonObject s3 = stations.createNestedObject();
     s3["eStop"] = states.station3EStop;
     s3["aStop"] = states.station3AStop;
+  } else {
+    // Non-alliance roles send empty station data
+    for (int i = 0; i < 3; i++) {
+      JsonObject station = stations.createNestedObject();
+      station["eStop"] = false;
+      station["aStop"] = false;
+    }
   }
 
-  char buf[300];
-  size_t len = serializeJson(doc, buf, sizeof(buf));
+  // Score (relevant for hub roles)
+  doc["score"] = (int)score;
 
-  IPAddress serverIP;
-  if (serverIP.fromString(arenaServerIP)) {
-    udp.beginPacket(serverIP, UDP_SEND_PORT);
-    udp.write((const uint8_t *)buf, len);
-    udp.endPacket();
-  }
-}
-
-void udp_comms_sendScoreReport(uint32_t score, const String &role) {
-  if (!initialized || !isEthernetConnected()) {
-    return;
-  }
-
-  StaticJsonDocument<128> doc;
-  doc["type"] = "score_report";
-  doc["role"] = role;
-  doc["score"] = score;
-
-  char buf[128];
+  char buf[384];
   size_t len = serializeJson(doc, buf, sizeof(buf));
 
   IPAddress serverIP;
@@ -192,4 +189,24 @@ bool udp_comms_getBlueLight(void) {
 
 int udp_comms_getMatchState(void) {
   return receivedMatchState;
+}
+
+bool udp_comms_getStackRed(void) {
+  return receivedStackRed;
+}
+
+bool udp_comms_getStackBlue(void) {
+  return receivedStackBlue;
+}
+
+bool udp_comms_getStackOrange(void) {
+  return receivedStackOrange;
+}
+
+bool udp_comms_getStackGreen(void) {
+  return receivedStackGreen;
+}
+
+bool udp_comms_getStackBuzzer(void) {
+  return receivedStackBuzzer;
 }

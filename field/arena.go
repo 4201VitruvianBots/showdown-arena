@@ -102,7 +102,7 @@ type Arena struct {
 	breakDescription                  string
 	preloadedTeams                    *[6]*model.Team
 	NextFoulId                        int
-	lastPlcNotifyTime 		          time.Time
+	lastPlcNotifyTime                 time.Time
 	Esp32                             plc.Esp32
 	autoTieWinner                     string // "red" or "blue" - randomly chosen at match start for tie-breaking
 }
@@ -220,6 +220,8 @@ func (arena *Arena) LoadSettings() error {
 	arena.Esp32.SetScoreTableAddress(settings.ScoreTableEstopAddress)
 	arena.Esp32.SetRedAllianceStationEstopAddress(settings.RedAllianceStationEstopAddress)
 	arena.Esp32.SetBlueAllianceStationEstopAddress(settings.BlueAllianceStationEstopAddress)
+	arena.Esp32.SetRedHubAddress(settings.RedHubAddress)
+	arena.Esp32.SetBlueHubAddress(settings.BlueHubAddress)
 	arena.RedHubLeds.SetAddress(settings.DMXAddress)
 	arena.BlueHubLeds.SetAddress(settings.DMXAddress)
 	arena.TbaClient = partner.NewTbaClient(settings.TbaEventCode, settings.TbaSecretId, settings.TbaSecret)
@@ -1153,14 +1155,13 @@ func (arena *Arena) handlePlcInputOutput() {
 	arena.handleTeamStop("B2", blueEStops[1], blueAStops[1])
 	arena.handleTeamStop("B3", blueEStops[2], blueAStops[2])
 
-
 	// Only notify every 500ms
-    if arena.lastPlcNotifyTime.IsZero() || time.Since(arena.lastPlcNotifyTime) >= 500*time.Millisecond {
-        //arena.PlcCoilsNotifier.Notify()
-        //arena.Plc.IoChangeNotifier().Notify()
-        arena.lastPlcNotifyTime = time.Now()
-    }
-    
+	if arena.lastPlcNotifyTime.IsZero() || time.Since(arena.lastPlcNotifyTime) >= 500*time.Millisecond {
+		//arena.PlcCoilsNotifier.Notify()
+		//arena.Plc.IoChangeNotifier().Notify()
+		arena.lastPlcNotifyTime = time.Now()
+	}
+
 	// Disabled for hybrid PLC and alternate IO setup
 	redEthernets, blueEthernets := arena.Plc.GetEthernetConnected()
 	arena.AllianceStations["R1"].Ethernet = redEthernets[0]
@@ -1190,6 +1191,7 @@ func (arena *Arena) handlePlcInputOutput() {
 		if arena.lastMatchState != PreMatch {
 			arena.Plc.SetFieldResetLight(true)
 		}
+		arena.Esp32.SendMatchState(int(PreMatch))
 		fallthrough
 	case TimeoutActive:
 		fallthrough
@@ -1199,6 +1201,8 @@ func (arena *Arena) handlePlcInputOutput() {
 		greenStackLight := redAllianceReady && blueAllianceReady && arena.Plc.GetCycleState(2, 0, 2)
 		arena.Plc.SetStackLights(!redAllianceReady, !blueAllianceReady, false, greenStackLight)
 		arena.Plc.SetStackBuzzer(redAllianceReady && blueAllianceReady)
+		arena.Esp32.SendStackLights(!redAllianceReady, !blueAllianceReady, false, greenStackLight, redAllianceReady && blueAllianceReady)
+		arena.Esp32.SendMatchState(int(arena.MatchState))
 
 		// Turn off lights if all teams become ready.
 		if redAllianceReady && blueAllianceReady {
@@ -1217,6 +1221,8 @@ func (arena *Arena) handlePlcInputOutput() {
 			arena.positionPostMatchScoreReady("red_near") && arena.positionPostMatchScoreReady("red_far") &&
 			arena.positionPostMatchScoreReady("blue_near") && arena.positionPostMatchScoreReady("blue_far")
 		arena.Plc.SetStackLights(false, false, !scoreReady, false)
+		arena.Esp32.SendStackLights(false, false, !scoreReady, false, false)
+		arena.Esp32.SendMatchState(int(arena.MatchState))
 
 		// Keep hub motors on for 3 seconds after the match ends.
 		if time.Since(arena.MatchStartTime).Seconds() <= game.GetDurationToTeleopEnd().Seconds()+3.0 && !arena.matchAborted && !arena.MatchStartTime.IsZero() {
@@ -1225,17 +1231,35 @@ func (arena *Arena) handlePlcInputOutput() {
 	case AutoPeriod, PausePeriod, TeleopPeriod, WarmupPeriod:
 		arena.Plc.SetStackBuzzer(false)
 		arena.Plc.SetStackLights(!redAllianceReady, !blueAllianceReady, false, true)
+		arena.Esp32.SendStackLights(!redAllianceReady, !blueAllianceReady, false, true, false)
+		arena.Esp32.SendMatchState(int(arena.MatchState))
 		hubMotorsOn = true
 	}
-	arena.Plc.SetHubMotors(hubMotorsOn)
+
+	// Set hub motors/state via ESP32 (with PLC fallback).
+	// Determine hub state string for ESP32 commands.
+	hubStateStr := "DISABLED"
+	if hubMotorsOn {
+		hubStateStr = "SCORING_ACTIVE"
+	}
 
 	// Get all the game-specific inputs and update the score.
-	// For REBUILT: Get hub FUEL counts from PLC and route to active/inactive based on which hub is active.
-	// The PLC provides cumulative counts, so we calculate deltas from the current score totals.
+	// Get hub FUEL counts from ESP32 hubs (with PLC fallback) and route to active/inactive based on
+	// which hub is active. Counts are cumulative, so we calculate deltas from the current score totals.
+	var redHubFuel, blueHubFuel int
+	if arena.Esp32.IsRedHubEnabled() {
+		redHubFuel = arena.Esp32.GetRedHubScore()
+	} else {
+		redHubFuel, _ = arena.Plc.GetHubBallCounts()
+	}
+	if arena.Esp32.IsBlueHubEnabled() {
+		blueHubFuel = arena.Esp32.GetBlueHubScore()
+	} else {
+		_, blueHubFuel = arena.Plc.GetHubBallCounts()
+	}
+
 	if arena.MatchState == AutoPeriod || arena.MatchState == PausePeriod || arena.MatchState == TeleopPeriod ||
 		inGracePeriod {
-		redHubFuel, blueHubFuel := arena.Plc.GetHubBallCounts()
-
 		// Calculate the delta since last read using current score totals
 		redTotalFuel := redScore.AutoFuel + redScore.ActiveFuel + redScore.InactiveFuel
 		blueTotalFuel := blueScore.AutoFuel + blueScore.ActiveFuel + blueScore.InactiveFuel
@@ -1246,7 +1270,6 @@ func (arena *Arena) handlePlcInputOutput() {
 		if redDelta > 0 || blueDelta > 0 {
 			if arena.MatchState == AutoPeriod || arena.MatchState == PausePeriod {
 				// During auto and pause (transition), all FUEL counts as auto FUEL
-				// This includes the grace period after auto ends to account for FUEL in flight
 				if redDelta > 0 {
 					redScore.AutoFuel += redDelta
 				}
@@ -1255,8 +1278,6 @@ func (arena *Arena) handlePlcInputOutput() {
 				}
 			} else if arena.MatchState == TeleopPeriod {
 				// During teleop, route to active or inactive based on which hub is currently active
-				// Include grace period after hub deactivates to account for FUEL in flight
-				// Determine who won auto to know which hub is active
 				redWonAuto, blueWonAuto := arena.determineAutoWinner()
 
 				matchTimeSec := arena.MatchTimeSec()
@@ -1285,6 +1306,7 @@ func (arena *Arena) handlePlcInputOutput() {
 	}
 
 	// Handle the hub lights.
+	var redLight, blueLight bool
 	if arena.MatchState == AutoPeriod || arena.MatchState == PausePeriod || arena.MatchState == TeleopPeriod {
 		// Determine who won auto to know which hub is active
 		redWonAuto, blueWonAuto := arena.determineAutoWinner()
@@ -1318,8 +1340,8 @@ func (arena *Arena) handlePlcInputOutput() {
 			}
 		}
 
-		redLight := redHubActive
-		blueLight := blueHubActive
+		redLight = redHubActive
+		blueLight = blueHubActive
 		if shouldFlash {
 			// Flash the currently active hub(s) at 2Hz (0.5 second period = on for 0.25s, off for 0.25s)
 			flashOn := int(matchTimeSec*4)%2 == 0
@@ -1330,14 +1352,28 @@ func (arena *Arena) handlePlcInputOutput() {
 				blueLight = flashOn
 			}
 		}
-
-		arena.Plc.SetHubLights(redLight, blueLight)
 	} else if arena.MatchState == PreMatch {
-		// During pre-match, turn on both hub lights for testing
-		arena.Plc.SetHubLights(false, false)
+		redLight = false
+		blueLight = false
 	} else {
-		// During grace period, turn on both hub lights
-		arena.Plc.SetHubLights(inGracePeriod, inGracePeriod)
+		// During grace period
+		redLight = inGracePeriod
+		blueLight = inGracePeriod
+	}
+
+	// Send hub commands via ESP32 (with PLC fallback for lights/motors).
+	if arena.Esp32.IsRedHubEnabled() {
+		arena.Esp32.SendRedHubCommand(hubStateStr, 1.0, redLight, blueLight)
+	} else {
+		arena.Plc.SetHubMotors(hubMotorsOn)
+		arena.Plc.SetHubLights(redLight, blueLight)
+	}
+	if arena.Esp32.IsBlueHubEnabled() {
+		arena.Esp32.SendBlueHubCommand(hubStateStr, 1.0, redLight, blueLight)
+	} else if !arena.Esp32.IsRedHubEnabled() {
+		// Only set PLC hub if neither ESP32 hub is handling it (avoid double-setting)
+		arena.Plc.SetHubMotors(hubMotorsOn)
+		arena.Plc.SetHubLights(redLight, blueLight)
 	}
 }
 

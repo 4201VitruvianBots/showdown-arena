@@ -133,7 +133,9 @@ func (dmx *Controller) Update() {
 	if dmx.shouldSendPacket() {
 		dmx.populatePacket(dmx.StartChannel)
 		if err := dmx.sendPacket(dmx.Universe); err != nil {
-			log.Printf("sACN error writing data to universe %d: %v", dmx.Universe, err)
+			log.Printf("sACN error writing data to universe %d: %v; closing connection", dmx.Universe, err)
+			dmx.conn.Close()
+			dmx.conn = nil
 			return
 		}
 		dmx.lastColors = dmx.colors

@@ -1,9 +1,11 @@
 #include "app/app_scoring.hpp"
 #include "app/app_motor.hpp"
 #include "app/app_display.hpp"
+#include "app/app_led_strip.hpp"
 #include "hw/hw_scoring.hpp"
 #include "hw/hw_motor.hpp"
 #include "hw/hw_display.hpp"
+#include "hw/hw_led_strip.hpp"
 #include "io/io_comms.h"
 
 #include <Arduino.h>
@@ -12,8 +14,8 @@
 #include <ArduinoJson.h>
 #include "WebServerSetup.h"
 #include "GlobalSettings.h"
+#include <ArduinoOTA.h>
 
-#define USE_SERIAL Serial
 #define USE_ETHERNET
 
 // Define the base URL for the API (kept for web server setup compatibility)
@@ -45,6 +47,7 @@ void setup()
   hw_scoring_init();
   hw_motor_init();
   hw_display_init();
+  hw_led_strip_init();
 
   app_scoring_reset();
   app_motor_reset();
@@ -77,6 +80,10 @@ void setup()
 
   // Initialize UDP communication
   udp_comms_init(arenaIP);
+
+  // Initialize ArduinoOTA
+  ArduinoOTA.setHostname(deviceRole.c_str());
+  ArduinoOTA.begin();
 #endif
 
   // Configure estop pins as inputs with pullup
@@ -109,10 +116,14 @@ void loop()
 {
   app_scoring_run();
   app_motor_run();
+  app_led_strip_run();
 
 #ifdef USE_ETHERNET
   // Process incoming UDP commands from the Go server
   udp_comms_run();
+
+  // Process ArduinoOTA
+  ArduinoOTA.handle();
 #endif
 
   static unsigned long lastSendTime = 0;
@@ -127,17 +138,10 @@ void loop()
     app_display_updateScore(currentScore);
 
 #ifdef USE_ETHERNET
-    // Send estop button states
+    // Send unified node_status message (includes estop states + score)
+    // The Go server routes by "role" and reads only the relevant fields.
     ButtonStates states = readButtonStates();
-    udp_comms_sendEstopState(states, deviceRole);
-
-    // Send score report
-    // Determine the score role based on device role
-    String scoreRole = "RED_HUB";  // Default
-    if (deviceRole == "BLUE_ALLIANCE") {
-      scoreRole = "BLUE_HUB";
-    }
-    udp_comms_sendScoreReport(currentScore, scoreRole);
+    udp_comms_sendNodeStatus(states, currentScore, deviceRole);
 #endif
   }
 

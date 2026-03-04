@@ -6,12 +6,13 @@
 package field
 
 import (
+	"strconv"
+
 	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/led"
 	"github.com/Team254/cheesy-arena/model"
 	"github.com/Team254/cheesy-arena/playoff"
 	"github.com/Team254/cheesy-arena/websocket"
-	"strconv"
 )
 
 type ArenaNotifiers struct {
@@ -88,6 +89,13 @@ func (arena *Arena) generateAllianceStationDisplayModeMessage() any {
 }
 
 func (arena *Arena) generateArenaStatusMessage() any {
+	redEStops, blueEStops := arena.Esp32.GetTeamEStops()
+	redAStops, blueAStops := arena.Esp32.GetTeamAStops()
+	stackRed, stackBlue, stackOrange, stackGreen, stackBuzzer := arena.Esp32.GetStackLights()
+	matchState := arena.Esp32.GetMatchState()
+	redHubState, redMotorDuty, redRedLight, redBlueLight := arena.Esp32.GetRedHubCommand()
+	blueHubState, blueMotorDuty, blueRedLight, blueBlueLight := arena.Esp32.GetBlueHubCommand()
+
 	return &struct {
 		MatchId          int
 		AllianceStations map[string]*AllianceStation
@@ -100,30 +108,179 @@ func (arena *Arena) generateArenaStatusMessage() any {
 		PlcIsHealthy          bool
 		FieldEStop            bool
 		PlcArmorBlockStatuses map[string]bool
-		ScoreTableIOEnabled   bool
-		RedEstopsEnabled      bool
-		BlueEstopsEnabled     bool
-		ScoreTableIOIsHealthy bool
-		RedEstopsIsHealthy    bool
-		BlueEStopsIsHealthy   bool
+		// Per-node ESP32 I/O data
+		ScoreTableIO struct {
+			Configured  bool
+			Connected   bool
+			FieldEStop  bool
+			StackRed    bool
+			StackBlue   bool
+			StackOrange bool
+			StackGreen  bool
+			StackBuzzer bool
+			MatchState  int
+		}
+		RedEstopsIO struct {
+			Configured  bool
+			Connected   bool
+			EStops      [3]bool
+			AStops      [3]bool
+			StackRed    bool
+			StackBlue   bool
+			StackOrange bool
+			StackGreen  bool
+			StackBuzzer bool
+			MatchState  int
+		}
+		BlueEstopsIO struct {
+			Configured  bool
+			Connected   bool
+			EStops      [3]bool
+			AStops      [3]bool
+			StackRed    bool
+			StackBlue   bool
+			StackOrange bool
+			StackGreen  bool
+			StackBuzzer bool
+			MatchState  int
+		}
+		RedHubIO struct {
+			Configured bool
+			Connected  bool
+			Score      int
+			HubState   string
+			MotorDuty  float64
+			RedLight   bool
+			BlueLight  bool
+			MatchState int
+		}
+		BlueHubIO struct {
+			Configured bool
+			Connected  bool
+			Score      int
+			HubState   string
+			MotorDuty  float64
+			RedLight   bool
+			BlueLight  bool
+			MatchState int
+		}
 	}{
-		arena.CurrentMatch.Id,
-		arena.AllianceStations,
-		arena.MatchState,
-		arena.checkCanStartMatch() == nil,
-		arena.accessPoint.Status,
-		arena.networkSwitch.Status,
-		arena.redSCC.Status,
-		arena.blueSCC.Status,
-		arena.Plc.IsHealthy(),
-		arena.Plc.GetFieldEStop(),
-		arena.Plc.GetArmorBlockStatuses(),
-		arena.Esp32.IsScoreTableIOEnabled(),
-		arena.Esp32.IsRedEstopsEnabled(),
-		arena.Esp32.IsBlueEstopsEnabled(),
-		arena.Esp32.IsScoreTableHealthy(),
-		arena.Esp32.IsRedEstopsHealthy(),
-		arena.Esp32.IsBlueEstopsHealthy(),
+		MatchId:               arena.CurrentMatch.Id,
+		AllianceStations:      arena.AllianceStations,
+		MatchState:            arena.MatchState,
+		CanStartMatch:         arena.checkCanStartMatch() == nil,
+		AccessPointStatus:     arena.accessPoint.Status,
+		SwitchStatus:          arena.networkSwitch.Status,
+		RedSCCStatus:          arena.redSCC.Status,
+		BlueSCCStatus:         arena.blueSCC.Status,
+		PlcIsHealthy:          arena.Plc.IsHealthy(),
+		FieldEStop:            arena.Plc.GetFieldEStop(),
+		PlcArmorBlockStatuses: arena.Plc.GetArmorBlockStatuses(),
+		ScoreTableIO: struct {
+			Configured  bool
+			Connected   bool
+			FieldEStop  bool
+			StackRed    bool
+			StackBlue   bool
+			StackOrange bool
+			StackGreen  bool
+			StackBuzzer bool
+			MatchState  int
+		}{
+			Configured:  arena.Esp32.IsScoreTableIOEnabled(),
+			Connected:   arena.Esp32.IsScoreTableHealthy(),
+			FieldEStop:  arena.Esp32.GetFieldEStop(),
+			StackRed:    stackRed,
+			StackBlue:   stackBlue,
+			StackOrange: stackOrange,
+			StackGreen:  stackGreen,
+			StackBuzzer: stackBuzzer,
+			MatchState:  matchState,
+		},
+		RedEstopsIO: struct {
+			Configured  bool
+			Connected   bool
+			EStops      [3]bool
+			AStops      [3]bool
+			StackRed    bool
+			StackBlue   bool
+			StackOrange bool
+			StackGreen  bool
+			StackBuzzer bool
+			MatchState  int
+		}{
+			Configured:  arena.Esp32.IsRedEstopsEnabled(),
+			Connected:   arena.Esp32.IsRedEstopsHealthy(),
+			EStops:      redEStops,
+			AStops:      redAStops,
+			StackRed:    stackRed,
+			StackBlue:   stackBlue,
+			StackOrange: stackOrange,
+			StackGreen:  stackGreen,
+			StackBuzzer: stackBuzzer,
+			MatchState:  matchState,
+		},
+		BlueEstopsIO: struct {
+			Configured  bool
+			Connected   bool
+			EStops      [3]bool
+			AStops      [3]bool
+			StackRed    bool
+			StackBlue   bool
+			StackOrange bool
+			StackGreen  bool
+			StackBuzzer bool
+			MatchState  int
+		}{
+			Configured:  arena.Esp32.IsBlueEstopsEnabled(),
+			Connected:   arena.Esp32.IsBlueEstopsHealthy(),
+			EStops:      blueEStops,
+			AStops:      blueAStops,
+			StackRed:    stackRed,
+			StackBlue:   stackBlue,
+			StackOrange: stackOrange,
+			StackGreen:  stackGreen,
+			StackBuzzer: stackBuzzer,
+			MatchState:  matchState,
+		},
+		RedHubIO: struct {
+			Configured bool
+			Connected  bool
+			Score      int
+			HubState   string
+			MotorDuty  float64
+			RedLight   bool
+			BlueLight  bool
+			MatchState int
+		}{
+			Configured: arena.Esp32.IsRedHubEnabled(),
+			Connected:  arena.Esp32.IsRedHubHealthy(),
+			Score:      arena.Esp32.GetRedHubScore(),
+			HubState:   redHubState,
+			MotorDuty:  redMotorDuty,
+			RedLight:   redRedLight,
+			BlueLight:  redBlueLight,
+			MatchState: matchState,
+		},
+		BlueHubIO: struct {
+			Configured bool
+			Connected  bool
+			Score      int
+			HubState   string
+			MotorDuty  float64
+			RedLight   bool
+			BlueLight  bool
+			MatchState int
+		}{
+			Configured: arena.Esp32.IsBlueHubEnabled(),
+			Connected:  arena.Esp32.IsBlueHubHealthy(),
+			Score:      arena.Esp32.GetBlueHubScore(),
+			HubState:   blueHubState,
+			MotorDuty:  blueMotorDuty,
+			RedLight:   blueRedLight,
+			BlueLight:  blueBlueLight,
+			MatchState: matchState,
+		},
 	}
 }
 

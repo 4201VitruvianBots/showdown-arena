@@ -4,11 +4,12 @@
 package field
 
 import (
+	"image/color"
+	"testing"
+
 	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/model"
 	"github.com/stretchr/testify/assert"
-	"image/color"
-	"testing"
 )
 
 func TestTeamSign_GenerateInMatchRearText(t *testing.T) {
@@ -16,21 +17,39 @@ func TestTeamSign_GenerateInMatchRearText(t *testing.T) {
 	arena.RedRealtimeScore.CurrentScore = *game.TestScore1()
 	arena.BlueRealtimeScore.CurrentScore = *game.TestScore2()
 
-	assert.Equal(t, "01:23 R080-B162 1/4", generateInMatchTeamRearText(arena, true, "01:23"))
-	assert.Equal(t, "01:23 B162-R080 1/4", generateInMatchTeamRearText(arena, false, "01:23"))
-	assert.Equal(t, "1-07 2-02 3-03 4-00", generateInMatchTimerRearText(arena, true))
-	assert.Equal(t, "1-15 2-03 3-05 4-03", generateInMatchTimerRearText(arena, false))
-	arena.BlueRealtimeScore.CurrentScore.Reef.Branches[2] = [12]bool{true, true, true, true, true, true, true, true}
-	arena.BlueRealtimeScore.CurrentScore.ProcessorAlgae = 2
-	assert.Equal(t, "00:59 R080-B195 1/3", generateInMatchTeamRearText(arena, true, "00:59"))
-	assert.Equal(t, "00:59 B195-R080 2/3", generateInMatchTeamRearText(arena, false, "00:59"))
-	assert.Equal(t, "1-07 2-02 3-03 4-00", generateInMatchTimerRearText(arena, true))
-	assert.Equal(t, "1-15 2-03 3-05 4-08", generateInMatchTimerRearText(arena, false))
+	// At matchTimeSec=0, we're in auto: shift="A", shiftTime=20
+	// Red: fuelForRP=3+50=53 (<100), threshold=100, autoTowerPts=15
+	// Blue: fuelForRP=5+120=125 (>=100), threshold=360, autoTowerPts=15
 
-	// Check that RP progress is hidden for playoff matches.
+	// Red score: AutoFuel*1=3 + AutoClimb=15 + ActiveFuel*1=50 + TeleopClimb=40 = 108, foul=0, total=108
+	// Blue score: AutoFuel*1=5 + AutoClimb=15 + ActiveFuel*1=120 + TeleopClimb=60 = 200, foul=85, total=285
+
+	assert.Equal(t, "A20 53/100 15 1:23", generateInMatchTeamRearText(arena, true, "1:23", 0))
+	assert.Equal(t, "A20 125/360 15 1:23", generateInMatchTeamRearText(arena, false, "1:23", 0))
+	assert.Equal(t, "R108-B285", generateInMatchTimerRearText(arena, true, 0))
+	assert.Equal(t, "B285-R108", generateInMatchTimerRearText(arena, false, 0))
+
+	// Check that RP progress shows X/100 when below threshold, X/360 when at or above.
+	arena.RedRealtimeScore.CurrentScore.ActiveFuel = 97
+	// Red fuelForRP = 3+97 = 100, which equals EnergizedRPThreshold, so threshold becomes 360.
+	// Red score: 3+15+97+40 = 155
+	assert.Equal(t, "A20 100/360 15 0:59", generateInMatchTeamRearText(arena, true, "0:59", 0))
+
+	// Check that RP progress is hidden for playoff matches and playoff format is used.
 	arena.CurrentMatch.Type = model.Playoff
-	assert.Equal(t, "00:45 R080-B195 ", generateInMatchTeamRearText(arena, true, "00:45"))
-	assert.Equal(t, "00:45 B195-R080 ", generateInMatchTeamRearText(arena, false, "00:45"))
+	assert.Equal(t, "A20 R155-B285 0:45", generateInMatchTeamRearText(arena, true, "0:45", 0))
+	assert.Equal(t, "A20 B285-R155 0:45", generateInMatchTeamRearText(arena, false, "0:45", 0))
+
+	// Test during teleop alternating shifts (after transition period).
+	// teleopStart = 0+20+3 = 23, transitionEnd = 23+10 = 33
+	// At matchTimeSec=40, we are 7 seconds into the first alternating shift
+	// By default, auto winner determined by auto points: Red=18 vs Blue=20, Blue wins auto.
+	// When Blue wins auto: Red hub ACTIVE first (even shifts), Blue INACTIVE first.
+	// So at shift 0: Red=active, Blue=inactive → indicator = "R"
+	// shiftTimeRemaining = 25 - 7 = 18
+	arena.CurrentMatch.Type = model.Qualification
+	assert.Equal(t, "R18 100/360 15 0:30", generateInMatchTeamRearText(arena, true, "0:30", 40))
+	assert.Equal(t, "R18 125/360 15 0:30", generateInMatchTeamRearText(arena, false, "0:30", 40))
 }
 
 func TestTeamSign_Timer(t *testing.T) {

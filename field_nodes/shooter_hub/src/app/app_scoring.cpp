@@ -36,29 +36,32 @@ void app_scoring_reset(void) {
   memset(&app_scoring_data, 0, sizeof(app_scoring_data_t));
 }
 
+static int lastMatchState = 0;
+
 void app_scoring_run(void) {
   app_scoring_captureAndProcessInputs();
 
+  int currentMatchState = io_comms_getMatchState();
+  // Reset score on match start (transition from PreMatch/StartMatch to Warmup/Auto)
+  lastMatchState = currentMatchState;
+
   switch (app_scoring_data.hub_state) {
   case REQUESTED_HUB_STATE_DEBUG_SCORING_TEST:
-  case REQUESTED_HUB_STATE_MATCH_PLAY_SCORING_ACTIVE: {
+  case REQUESTED_HUB_STATE_MATCH_PLAY_SCORING_ACTIVE:
+  case REQUESTED_HUB_STATE_DISABLED:
+  case REQUESTED_HUB_STATE_MATCH_PLAY_SCORING_INACTIVE:
+    // Fallthrough - always count in these states
     for (uint8_t i = 0; i < HW_SCORING_BREAK_BEAM_SENSOR_COUNT; i++) {
       if (app_scoring_data.channelData[i].rising_edge_detected) {
         app_scoring_data.score++;
       }
     }
-  } break;
-
-  case REQUESTED_HUB_STATE_MATCH_PLAY_SCORING_INACTIVE:
-  default:
-    // Scoring is inactive, but we don't want to reset.
     break;
 
   case REQUESTED_HUB_STATE_DEBUG_MOTOR_SPINUP:
-  case REQUESTED_HUB_STATE_DISABLED: {
-    // Reset score when disabled
+    // Reset score when explicitly requested (manual override)
     app_scoring_data.score = 0;
-  } break;
+    break;
   }
 }
 

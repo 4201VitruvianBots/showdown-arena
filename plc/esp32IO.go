@@ -2,13 +2,18 @@
 // Author: cpapplefamily@gmail.com (Corey Applegate)
 //
 // ESP32 IO handlers using UDP JSON communication.
-// Replaces the previous TCP/HTTP-based health checking and data exchange.
 //
 // Architecture:
 //   - Go listens on udpListenPort (5301) for JSON messages from ESP32s (many→1)
 //   - Go sends JSON commands to each ESP32 IP on udpSendPort (5300) (1→many)
 //   - Each ESP32 identifies itself by "role" in its messages
 //   - Health is determined by receiving any valid message within the timeout window
+//
+// Message Protocol:
+//   - One inbound message type: "node_status" (ESP32 → Go)
+//   - One outbound message type: "node_command" (Go → ESP32)
+//   - All device types use the same message shape; each reads only the fields
+//     relevant to its role. Go-side uses separate structs per device type for clarity.
 
 package plc
 
@@ -25,7 +30,7 @@ const (
 	udpListenPort      = 5301 // Port Go listens on for ESP32→Go messages
 	udpSendPort        = 5300 // Port ESP32s listen on for Go→ESP32 commands
 	udpHealthTimeoutMs = 2000 // Mark unhealthy if no message received for this long
-	udpSendIntervalMs  = 100  // How often to send commands to ESP32s
+	udpSendIntervalMs  = 100  // How often to send commands to ESP32s (10Hz)
 	udpReadBufferSize  = 2048
 )
 
@@ -33,7 +38,7 @@ const (
 type Esp32 interface {
 	Run()
 
-	// Health configuration
+	// Health configuration — score table / alliance estops
 	IsScoreTableIOEnabled() bool
 	IsRedEstopsEnabled() bool
 	IsBlueEstopsEnabled() bool
@@ -41,10 +46,18 @@ type Esp32 interface {
 	IsRedEstopsHealthy() bool
 	IsBlueEstopsHealthy() bool
 
+	// Health configuration — hubs
+	IsRedHubEnabled() bool
+	IsBlueHubEnabled() bool
+	IsRedHubHealthy() bool
+	IsBlueHubHealthy() bool
+
 	// Address configuration
 	SetScoreTableAddress(string)
 	SetRedAllianceStationEstopAddress(string)
 	SetBlueAllianceStationEstopAddress(string)
+	SetRedHubAddress(string)
+	SetBlueHubAddress(string)
 
 	// Data received from ESP32s
 	GetFieldEStop() bool
@@ -54,59 +67,58 @@ type Esp32 interface {
 	GetBlueHubScore() int
 
 	// Commands to send to ESP32s
-	SendHubCommand(hubState string, motorDuty float64, redLight, blueLight bool)
+	SendRedHubCommand(hubState string, motorDuty float64, redLight, blueLight bool)
+	SendBlueHubCommand(hubState string, motorDuty float64, redLight, blueLight bool)
 	SendStackLights(red, blue, orange, green, buzzer bool)
 	SendMatchState(state int)
+
+	// Getters for current outbound command state (for debugging/display)
+	GetStackLights() (red, blue, orange, green, buzzer bool)
+	GetMatchState() int
+	GetRedHubCommand() (hubState string, motorDuty float64, redLight, blueLight bool)
+	GetBlueHubCommand() (hubState string, motorDuty float64, redLight, blueLight bool)
 }
 
-// --- Inbound message types (ESP32 → Go) ---
+// --- Inbound message (ESP32 → Go): "node_status" ---
 
-// EstopStationState represents one driver station's stop button states.
-type EstopStationState struct {
+// NodeStationStatus represents one driver station's stop button states within a node_status message.
+type NodeStationStatus struct {
 	EStop bool `json:"eStop"`
 	AStop bool `json:"aStop"`
 }
 
-// EstopStateMessage is sent by ESP32s to report estop/astop button states.
-type EstopStateMessage struct {
-	Type       string              `json:"type"` // "estop_state"
-	Role       string              `json:"role"` // "RED_ALLIANCE", "BLUE_ALLIANCE", "FMS_TABLE"
-	FieldEStop bool                `json:"fieldEStop"`
-	Stations   [3]EstopStationState `json:"stations"`
+// NodeStatusMessage is the unified inbound message from all ESP32 device types.
+// Each device populates the fields relevant to its role:
+//   - RED_ALLIANCE / BLUE_ALLIANCE: stations[]
+//   - FMS_TABLE: fieldEStop
+//   - RED_HUB / BLUE_HUB: score
+type NodeStatusMessage struct {
+	Type       string               `json:"type"` // Always "node_status"
+	Role       string               `json:"role"` // "RED_ALLIANCE", "BLUE_ALLIANCE", "FMS_TABLE", "RED_HUB", "BLUE_HUB"
+	FieldEStop bool                 `json:"fieldEStop"`
+	Stations   [3]NodeStationStatus `json:"stations"`
+	Score      int                  `json:"score"`
 }
 
-// ScoreReportMessage is sent by ESP32s to report scoring data.
-type ScoreReportMessage struct {
-	Type  string `json:"type"`  // "score_report"
-	Role  string `json:"role"`  // "RED_HUB", "BLUE_HUB"
-	Score int    `json:"score"`
-}
+// --- Outbound message (Go → ESP32): "node_command" ---
 
-// --- Outbound message types (Go → ESP32) ---
-
-// HubCommandMessage commands a scoring hub ESP32.
-type HubCommandMessage struct {
-	Type      string  `json:"type"`      // "hub_command"
-	HubState  string  `json:"hubState"`  // "DISABLED", "SCORING_ACTIVE", "SCORING_INACTIVE", etc.
-	MotorDuty float64 `json:"motorDuty"`
-	RedLight  bool    `json:"redLight"`
-	BlueLight bool    `json:"blueLight"`
-}
-
-// StackLightsMessage commands the score table stack lights.
-type StackLightsMessage struct {
-	Type   string `json:"type"` // "stack_lights"
-	Red    bool   `json:"red"`
-	Blue   bool   `json:"blue"`
-	Orange bool   `json:"orange"`
-	Green  bool   `json:"green"`
-	Buzzer bool   `json:"buzzer"`
-}
-
-// MatchStateMessage sends the current match state to ESP32s.
-type MatchStateMessage struct {
-	Type  string `json:"type"`  // "match_state"
-	State int    `json:"state"`
+// NodeCommandMessage is the unified outbound message sent to all ESP32 device types.
+// Each device reads only the fields relevant to its role:
+//   - Hubs read: hubState, motorDuty, redLight, blueLight, matchState
+//   - Estop panels read: stackRed/Blue/Orange/Green, stackBuzzer, matchState
+//   - Score table reads: stackRed/Blue/Orange/Green, stackBuzzer, matchState
+type NodeCommandMessage struct {
+	Type        string  `json:"type"`     // Always "node_command"
+	HubState    string  `json:"hubState"` // "DISABLED", "SCORING_ACTIVE", "SCORING_INACTIVE", etc.
+	MotorDuty   float64 `json:"motorDuty"`
+	RedLight    bool    `json:"redLight"`
+	BlueLight   bool    `json:"blueLight"`
+	StackRed    bool    `json:"stackRed"`
+	StackBlue   bool    `json:"stackBlue"`
+	StackOrange bool    `json:"stackOrange"`
+	StackGreen  bool    `json:"stackGreen"`
+	StackBuzzer bool    `json:"stackBuzzer"`
+	MatchState  int     `json:"matchState"`
 }
 
 // InboundMessage is used for initial JSON unmarshalling to determine message type.
@@ -120,31 +132,38 @@ type Esp32IO struct {
 	ScoreTableIP         string
 	RedAllianceEstopsIP  string
 	BlueAllianceEstopsIP string
+	RedHubIP             string
+	BlueHubIP            string
 
 	// Health tracking — last time a valid message was received from each node
-	scoreTableLastHeard     time.Time
-	redEstopsLastHeard      time.Time
-	blueEstopsLastHeard     time.Time
+	scoreTableLastHeard time.Time
+	redEstopsLastHeard  time.Time
+	blueEstopsLastHeard time.Time
+	redHubLastHeard     time.Time
+	blueHubLastHeard    time.Time
 
 	// Received state from ESP32s
-	fieldEStop    bool
-	redEStops     [3]bool
-	redAStops     [3]bool
-	blueEStops    [3]bool
-	blueAStops    [3]bool
-	redHubScore   int
-	blueHubScore  int
+	fieldEStop   bool
+	redEStops    [3]bool
+	redAStops    [3]bool
+	blueEStops   [3]bool
+	blueAStops   [3]bool
+	redHubScore  int
+	blueHubScore int
 
 	// Outbound command state (set by the arena, sent periodically)
-	hubCommand  HubCommandMessage
-	stackLights StackLightsMessage
-	matchState  MatchStateMessage
+	redHubCommand  NodeCommandMessage
+	blueHubCommand NodeCommandMessage
+	stackLights    NodeCommandMessage // Shared stack light + match state for estop/table nodes
+	matchState     int
 
 	// UDP connection
 	listenConn *net.UDPConn
 
 	mu sync.Mutex
 }
+
+// --- Address setters ---
 
 func (esp32 *Esp32IO) SetScoreTableAddress(address string) {
 	address = strings.TrimSpace(address)
@@ -188,6 +207,34 @@ func (esp32 *Esp32IO) SetBlueAllianceStationEstopAddress(address string) {
 	}
 }
 
+func (esp32 *Esp32IO) SetRedHubAddress(address string) {
+	address = strings.TrimSpace(address)
+	if address != "" && net.ParseIP(address) == nil {
+		log.Printf("Invalid Red Hub IP address: %s", address)
+		return
+	}
+	esp32.mu.Lock()
+	esp32.RedHubIP = address
+	esp32.mu.Unlock()
+	if address != "" {
+		log.Printf("Set Red Hub IP to: %s", address)
+	}
+}
+
+func (esp32 *Esp32IO) SetBlueHubAddress(address string) {
+	address = strings.TrimSpace(address)
+	if address != "" && net.ParseIP(address) == nil {
+		log.Printf("Invalid Blue Hub IP address: %s", address)
+		return
+	}
+	esp32.mu.Lock()
+	esp32.BlueHubIP = address
+	esp32.mu.Unlock()
+	if address != "" {
+		log.Printf("Set Blue Hub IP to: %s", address)
+	}
+}
+
 // --- Health / Enabled checks ---
 
 func (esp32 *Esp32IO) IsScoreTableIOEnabled() bool {
@@ -206,6 +253,18 @@ func (esp32 *Esp32IO) IsBlueEstopsEnabled() bool {
 	esp32.mu.Lock()
 	defer esp32.mu.Unlock()
 	return esp32.BlueAllianceEstopsIP != ""
+}
+
+func (esp32 *Esp32IO) IsRedHubEnabled() bool {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	return esp32.RedHubIP != ""
+}
+
+func (esp32 *Esp32IO) IsBlueHubEnabled() bool {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	return esp32.BlueHubIP != ""
 }
 
 func (esp32 *Esp32IO) IsScoreTableHealthy() bool {
@@ -235,12 +294,30 @@ func (esp32 *Esp32IO) IsBlueEstopsHealthy() bool {
 	return time.Since(esp32.blueEstopsLastHeard) < time.Millisecond*udpHealthTimeoutMs
 }
 
+func (esp32 *Esp32IO) IsRedHubHealthy() bool {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	if esp32.RedHubIP == "" {
+		return false
+	}
+	return time.Since(esp32.redHubLastHeard) < time.Millisecond*udpHealthTimeoutMs
+}
+
+func (esp32 *Esp32IO) IsBlueHubHealthy() bool {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	if esp32.BlueHubIP == "" {
+		return false
+	}
+	return time.Since(esp32.blueHubLastHeard) < time.Millisecond*udpHealthTimeoutMs
+}
+
 // --- Data accessors (read state received from ESP32s) ---
 
 func (esp32 *Esp32IO) GetFieldEStop() bool {
 	esp32.mu.Lock()
 	defer esp32.mu.Unlock()
-	return esp32.fieldEStop
+	return !esp32.fieldEStop
 }
 
 func (esp32 *Esp32IO) GetTeamEStops() ([3]bool, [3]bool) {
@@ -269,11 +346,23 @@ func (esp32 *Esp32IO) GetBlueHubScore() int {
 
 // --- Command setters (called by arena, sent to ESP32s periodically) ---
 
-func (esp32 *Esp32IO) SendHubCommand(hubState string, motorDuty float64, redLight, blueLight bool) {
+func (esp32 *Esp32IO) SendRedHubCommand(hubState string, motorDuty float64, redLight, blueLight bool) {
 	esp32.mu.Lock()
 	defer esp32.mu.Unlock()
-	esp32.hubCommand = HubCommandMessage{
-		Type:      "hub_command",
+	esp32.redHubCommand = NodeCommandMessage{
+		Type:      "node_command",
+		HubState:  hubState,
+		MotorDuty: motorDuty,
+		RedLight:  redLight,
+		BlueLight: blueLight,
+	}
+}
+
+func (esp32 *Esp32IO) SendBlueHubCommand(hubState string, motorDuty float64, redLight, blueLight bool) {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	esp32.blueHubCommand = NodeCommandMessage{
+		Type:      "node_command",
 		HubState:  hubState,
 		MotorDuty: motorDuty,
 		RedLight:  redLight,
@@ -284,23 +373,46 @@ func (esp32 *Esp32IO) SendHubCommand(hubState string, motorDuty float64, redLigh
 func (esp32 *Esp32IO) SendStackLights(red, blue, orange, green, buzzer bool) {
 	esp32.mu.Lock()
 	defer esp32.mu.Unlock()
-	esp32.stackLights = StackLightsMessage{
-		Type:   "stack_lights",
-		Red:    red,
-		Blue:   blue,
-		Orange: orange,
-		Green:  green,
-		Buzzer: buzzer,
-	}
+	esp32.stackLights.StackRed = red
+	esp32.stackLights.StackBlue = blue
+	esp32.stackLights.StackOrange = orange
+	esp32.stackLights.StackGreen = green
+	esp32.stackLights.StackBuzzer = buzzer
 }
 
 func (esp32 *Esp32IO) SendMatchState(state int) {
 	esp32.mu.Lock()
 	defer esp32.mu.Unlock()
-	esp32.matchState = MatchStateMessage{
-		Type:  "match_state",
-		State: state,
-	}
+	esp32.matchState = state
+}
+
+// --- Outbound command getters (for debugging/display) ---
+
+func (esp32 *Esp32IO) GetStackLights() (red, blue, orange, green, buzzer bool) {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	return esp32.stackLights.StackRed, esp32.stackLights.StackBlue,
+		esp32.stackLights.StackOrange, esp32.stackLights.StackGreen, esp32.stackLights.StackBuzzer
+}
+
+func (esp32 *Esp32IO) GetMatchState() int {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	return esp32.matchState
+}
+
+func (esp32 *Esp32IO) GetRedHubCommand() (hubState string, motorDuty float64, redLight, blueLight bool) {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	return esp32.redHubCommand.HubState, esp32.redHubCommand.MotorDuty,
+		esp32.redHubCommand.RedLight, esp32.redHubCommand.BlueLight
+}
+
+func (esp32 *Esp32IO) GetBlueHubCommand() (hubState string, motorDuty float64, redLight, blueLight bool) {
+	esp32.mu.Lock()
+	defer esp32.mu.Unlock()
+	return esp32.blueHubCommand.HubState, esp32.blueHubCommand.MotorDuty,
+		esp32.blueHubCommand.RedLight, esp32.blueHubCommand.BlueLight
 }
 
 // --- Main run loop ---
@@ -308,9 +420,9 @@ func (esp32 *Esp32IO) SendMatchState(state int) {
 // Run starts the UDP listener and periodic sender. Should be called as a goroutine.
 func (esp32 *Esp32IO) Run() {
 	// Initialize default command states
-	esp32.hubCommand = HubCommandMessage{Type: "hub_command", HubState: "DISABLED"}
-	esp32.stackLights = StackLightsMessage{Type: "stack_lights"}
-	esp32.matchState = MatchStateMessage{Type: "match_state"}
+	esp32.redHubCommand = NodeCommandMessage{Type: "node_command", HubState: "DISABLED"}
+	esp32.blueHubCommand = NodeCommandMessage{Type: "node_command", HubState: "DISABLED"}
+	esp32.stackLights = NodeCommandMessage{Type: "node_command"}
 
 	// Start the UDP listener
 	go esp32.runListener()
@@ -360,29 +472,21 @@ func (esp32 *Esp32IO) handleInboundMessage(data []byte, remoteAddr *net.UDPAddr)
 	}
 
 	switch msg.Type {
-	case "estop_state":
-		var estopMsg EstopStateMessage
-		if err := json.Unmarshal(data, &estopMsg); err != nil {
-			log.Printf("ESP32 UDP: Failed to parse estop_state from %s: %v", remoteAddr, err)
+	case "node_status":
+		var statusMsg NodeStatusMessage
+		if err := json.Unmarshal(data, &statusMsg); err != nil {
+			log.Printf("ESP32 UDP: Failed to parse node_status from %s: %v", remoteAddr, err)
 			return
 		}
-		esp32.handleEstopState(&estopMsg, remoteAddr)
-
-	case "score_report":
-		var scoreMsg ScoreReportMessage
-		if err := json.Unmarshal(data, &scoreMsg); err != nil {
-			log.Printf("ESP32 UDP: Failed to parse score_report from %s: %v", remoteAddr, err)
-			return
-		}
-		esp32.handleScoreReport(&scoreMsg, remoteAddr)
+		esp32.handleNodeStatus(&statusMsg, remoteAddr)
 
 	default:
 		log.Printf("ESP32 UDP: Unknown message type '%s' from %s", msg.Type, remoteAddr)
 	}
 }
 
-// handleEstopState processes an estop state message from an ESP32.
-func (esp32 *Esp32IO) handleEstopState(msg *EstopStateMessage, remoteAddr *net.UDPAddr) {
+// handleNodeStatus processes a unified node_status message, routing by role.
+func (esp32 *Esp32IO) handleNodeStatus(msg *NodeStatusMessage, remoteAddr *net.UDPAddr) {
 	esp32.mu.Lock()
 	defer esp32.mu.Unlock()
 
@@ -390,67 +494,81 @@ func (esp32 *Esp32IO) handleEstopState(msg *EstopStateMessage, remoteAddr *net.U
 	case "FMS_TABLE":
 		esp32.fieldEStop = msg.FieldEStop
 		esp32.scoreTableLastHeard = time.Now()
+
 	case "RED_ALLIANCE":
 		for i := 0; i < 3; i++ {
 			esp32.redEStops[i] = msg.Stations[i].EStop
 			esp32.redAStops[i] = msg.Stations[i].AStop
 		}
 		esp32.redEstopsLastHeard = time.Now()
+
 	case "BLUE_ALLIANCE":
 		for i := 0; i < 3; i++ {
 			esp32.blueEStops[i] = msg.Stations[i].EStop
 			esp32.blueAStops[i] = msg.Stations[i].AStop
 		}
 		esp32.blueEstopsLastHeard = time.Now()
-	default:
-		log.Printf("ESP32 UDP: Unknown estop role '%s' from %s", msg.Role, remoteAddr)
-	}
-}
 
-// handleScoreReport processes a score report message from an ESP32.
-func (esp32 *Esp32IO) handleScoreReport(msg *ScoreReportMessage, remoteAddr *net.UDPAddr) {
-	esp32.mu.Lock()
-	defer esp32.mu.Unlock()
-
-	switch msg.Role {
 	case "RED_HUB":
 		esp32.redHubScore = msg.Score
-		// Update health for score table (the hub ESP32 is co-located)
-		esp32.scoreTableLastHeard = time.Now()
+		esp32.redHubLastHeard = time.Now()
+
 	case "BLUE_HUB":
 		esp32.blueHubScore = msg.Score
-		esp32.scoreTableLastHeard = time.Now()
+		esp32.blueHubLastHeard = time.Now()
+
 	default:
-		log.Printf("ESP32 UDP: Unknown score role '%s' from %s", msg.Role, remoteAddr)
+		log.Printf("ESP32 UDP: Unknown role '%s' from %s", msg.Role, remoteAddr)
 	}
 }
 
 // sendCommandsToAll sends the current command state to all configured ESP32s.
 func (esp32 *Esp32IO) sendCommandsToAll() {
 	esp32.mu.Lock()
-	hubCmd := esp32.hubCommand
-	stackCmd := esp32.stackLights
-	matchCmd := esp32.matchState
+	redHubCmd := esp32.redHubCommand
+	blueHubCmd := esp32.blueHubCommand
+
+	// Build the shared command for estop/table nodes with stack lights + match state
+	sharedCmd := NodeCommandMessage{
+		Type:        "node_command",
+		StackRed:    esp32.stackLights.StackRed,
+		StackBlue:   esp32.stackLights.StackBlue,
+		StackOrange: esp32.stackLights.StackOrange,
+		StackGreen:  esp32.stackLights.StackGreen,
+		StackBuzzer: esp32.stackLights.StackBuzzer,
+		MatchState:  esp32.matchState,
+	}
+
+	// Include match state in hub commands
+	redHubCmd.MatchState = esp32.matchState
+	blueHubCmd.MatchState = esp32.matchState
+
 	scoreTableIP := esp32.ScoreTableIP
 	redEstopsIP := esp32.RedAllianceEstopsIP
 	blueEstopsIP := esp32.BlueAllianceEstopsIP
+	redHubIP := esp32.RedHubIP
+	blueHubIP := esp32.BlueHubIP
 	esp32.mu.Unlock()
 
-	// Send hub command + match state to the score table ESP32 (which also handles the hub)
+	// Send to score table
 	if scoreTableIP != "" {
-		esp32.sendJSON(scoreTableIP, hubCmd)
-		esp32.sendJSON(scoreTableIP, matchCmd)
-		esp32.sendJSON(scoreTableIP, stackCmd)
+		esp32.sendJSON(scoreTableIP, sharedCmd)
 	}
 
-	// Send stack lights + match state to alliance estop ESP32s
+	// Send to alliance estop panels
 	if redEstopsIP != "" {
-		esp32.sendJSON(redEstopsIP, stackCmd)
-		esp32.sendJSON(redEstopsIP, matchCmd)
+		esp32.sendJSON(redEstopsIP, sharedCmd)
 	}
 	if blueEstopsIP != "" {
-		esp32.sendJSON(blueEstopsIP, stackCmd)
-		esp32.sendJSON(blueEstopsIP, matchCmd)
+		esp32.sendJSON(blueEstopsIP, sharedCmd)
+	}
+
+	// Send per-hub commands to each hub
+	if redHubIP != "" {
+		esp32.sendJSON(redHubIP, redHubCmd)
+	}
+	if blueHubIP != "" {
+		esp32.sendJSON(blueHubIP, blueHubCmd)
 	}
 }
 

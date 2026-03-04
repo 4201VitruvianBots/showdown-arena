@@ -264,3 +264,94 @@ func IsBlueHubActiveForScoring(matchTimeSec float64, blueWonAuto bool) bool {
 
 	return false
 }
+
+// GetShiftIndicator returns the shift indicator letter for the team sign display.
+// "A" = Auto (both hubs active), "T" = Transition (both hubs active),
+// "R" = Red hub active only, "B" = Blue hub active only, "E" = End Game (both hubs active).
+// Returns "" if not in an active match period.
+func GetShiftIndicator(matchTimeSec float64, isRedHubActive, isBlueHubActive bool) string {
+	teleopStartSec := float64(MatchTiming.WarmupDurationSec + MatchTiming.AutoDurationSec + MatchTiming.PauseDurationSec)
+	teleopEndSec := teleopStartSec + float64(MatchTiming.TeleopDurationSec)
+	transitionEndSec := teleopStartSec + float64(TransitionDurationSec)
+
+	// Before teleop starts (auto + pause), both hubs are active
+	if matchTimeSec < teleopStartSec {
+		return "A"
+	}
+
+	// Transition period (first 10 seconds of teleop)
+	if matchTimeSec < transitionEndSec {
+		return "T"
+	}
+
+	// End Game (last 30 seconds of teleop)
+	if matchTimeSec >= teleopEndSec-float64(EndGameDurationSec) && matchTimeSec < teleopEndSec {
+		return "E"
+	}
+
+	// After match end
+	if matchTimeSec >= teleopEndSec {
+		return ""
+	}
+
+	// Alternating shifts - determine which hub is active
+	if isRedHubActive && isBlueHubActive {
+		return "E" // Shouldn't happen during alternating, but safety fallback
+	}
+	if isRedHubActive {
+		return "R"
+	}
+	if isBlueHubActive {
+		return "B"
+	}
+
+	return ""
+}
+
+// GetShiftTimeRemaining returns the number of seconds remaining in the current shift/period.
+// During Auto: auto time remaining. During Transition: transition time remaining.
+// During alternating shifts: time remaining in the current 25-second shift.
+// During End Game: end game time remaining. Returns 0 if not in an active match period.
+func GetShiftTimeRemaining(matchTimeSec float64) int {
+	teleopStartSec := float64(MatchTiming.WarmupDurationSec + MatchTiming.AutoDurationSec + MatchTiming.PauseDurationSec)
+	teleopEndSec := teleopStartSec + float64(MatchTiming.TeleopDurationSec)
+	transitionEndSec := teleopStartSec + float64(TransitionDurationSec)
+
+	// Auto period (including warmup)
+	autoEndSec := float64(MatchTiming.WarmupDurationSec + MatchTiming.AutoDurationSec)
+	if matchTimeSec < autoEndSec {
+		return int(autoEndSec - matchTimeSec)
+	}
+
+	// Pause period - show time remaining until teleop
+	if matchTimeSec < teleopStartSec {
+		return int(teleopStartSec - matchTimeSec)
+	}
+
+	// Transition period
+	if matchTimeSec < transitionEndSec {
+		return int(transitionEndSec - matchTimeSec)
+	}
+
+	// End Game (last 30 seconds of teleop)
+	if matchTimeSec >= teleopEndSec-float64(EndGameDurationSec) && matchTimeSec < teleopEndSec {
+		return int(teleopEndSec - matchTimeSec)
+	}
+
+	// After match end
+	if matchTimeSec >= teleopEndSec {
+		return 0
+	}
+
+	// Alternating shifts - calculate time remaining in current 25-second shift
+	postTransitionSec := matchTimeSec - transitionEndSec
+	// But cap at the start of end game
+	endGameStartSec := teleopEndSec - float64(EndGameDurationSec)
+	timeInShift := postTransitionSec - float64(int(postTransitionSec/ShiftDurationSec))*float64(ShiftDurationSec)
+	shiftEnd := matchTimeSec + (float64(ShiftDurationSec) - timeInShift)
+	if shiftEnd > endGameStartSec {
+		// Current shift is cut short by end game
+		return int(endGameStartSec - matchTimeSec)
+	}
+	return int(float64(ShiftDurationSec) - timeInShift)
+}

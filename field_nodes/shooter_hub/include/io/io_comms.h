@@ -25,4 +25,10 @@ RequestedHubState_E io_comms_getRequestedHubState(void);
  */
 float io_comms_getConfigMotorDutyCmd(hw_motor_configInstalledMotors_E motor);
 
+/**
+ * @brief Get the current match state.
+ * @return int The match state.
+ */
+int io_comms_getMatchState(void);
+
 #endif // IO_COMMS_H

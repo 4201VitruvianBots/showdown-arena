@@ -20,6 +20,9 @@
 #define HW_MOTOR_LEFT_PWM_PIN 33
 #define HW_MOTOR_RIGHT_PWM_PIN 34
 
+#define HW_LED_STRIP_PIN 1
+#define HW_LED_STRIP_NUM_LEDS 300
+
 // HUB75 LED Matrix Display pins
 #define HW_DISPLAY_R1_PIN  42
 #define HW_DISPLAY_G1_PIN  41

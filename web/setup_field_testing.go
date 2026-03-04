@@ -7,13 +7,14 @@ package web
 
 import (
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+
 	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/led"
 	"github.com/Team254/cheesy-arena/model"
 	"github.com/Team254/cheesy-arena/websocket"
-	"io"
-	"log"
-	"net/http"
 )
 
 // Shows the Field Testing page.
@@ -66,7 +67,7 @@ func (web *Web) fieldTestingWebsocketHandler(w http.ResponseWriter, r *http.Requ
 	defer ws.Close()
 
 	// Subscribe the websocket to the notifiers whose messages will be passed on to the client, in a separate goroutine.
-	go ws.HandleNotifiers(web.arena.Plc.IoChangeNotifier(), web.arena.HubLedNotifier)
+	go ws.HandleNotifiers(web.arena.Plc.IoChangeNotifier(), web.arena.HubLedNotifier, web.arena.ArenaStatusNotifier)
 
 	// Loop, waiting for commands and responding to them, until the client closes the connection.
 	for {

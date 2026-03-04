@@ -7,14 +7,15 @@ package field
 
 import (
 	"fmt"
-	"github.com/Team254/cheesy-arena/game"
-	"github.com/Team254/cheesy-arena/model"
 	"image/color"
 	"log"
 	"net"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Team254/cheesy-arena/game"
+	"github.com/Team254/cheesy-arena/model"
 )
 
 // Represents a collection of team number and timer signs.
@@ -82,6 +83,7 @@ func NewTeamSigns() *TeamSigns {
 func (signs *TeamSigns) Update(arena *Arena) {
 	// Generate the countdown string which is used in multiple places.
 	matchTimeSec := int(arena.MatchTimeSec())
+	matchTimeSecF := arena.MatchTimeSec()
 	var countdownSec int
 	switch arena.MatchState {
 	case PreMatch:
@@ -104,13 +106,13 @@ func (signs *TeamSigns) Update(arena *Arena) {
 	default:
 		countdownSec = 0
 	}
-	countdown := fmt.Sprintf("%02d:%02d", countdownSec/60, countdownSec%60)
+	countdown := fmt.Sprintf("%d:%02d", countdownSec/60, countdownSec%60)
 
 	// Generate the in-match rear text which is common to a whole alliance.
-	redInMatchTeamRearText := generateInMatchTeamRearText(arena, true, countdown)
-	redInMatchTimerRearText := generateInMatchTimerRearText(arena, true)
-	blueInMatchTeamRearText := generateInMatchTeamRearText(arena, false, countdown)
-	blueInMatchTimerRearText := generateInMatchTimerRearText(arena, false)
+	redInMatchTeamRearText := generateInMatchTeamRearText(arena, true, countdown, matchTimeSecF)
+	redInMatchTimerRearText := generateInMatchTimerRearText(arena, true, matchTimeSecF)
+	blueInMatchTeamRearText := generateInMatchTeamRearText(arena, false, countdown, matchTimeSecF)
+	blueInMatchTimerRearText := generateInMatchTimerRearText(arena, false, matchTimeSecF)
 
 	signs.Red1.update(arena, arena.AllianceStations["R1"], true, countdown, redInMatchTeamRearText)
 	signs.Red2.update(arena, arena.AllianceStations["R2"], true, countdown, redInMatchTeamRearText)
@@ -186,48 +188,78 @@ func (sign *TeamSign) update(
 }
 
 // Returns the in-match rear text for the team number display that is common to the whole given alliance.
-func generateInMatchTeamRearText(arena *Arena, isRed bool, countdown string) string {
+// Qualification format: "R10 105/360 30 1:54" (shift+time, RP progress, tower pts, match time)
+// Playoff format: "R10 B115-R124 1:54" (shift+time, scores, match time)
+func generateInMatchTeamRearText(arena *Arena, isRed bool, countdown string, matchTimeSec float64) string {
+	var realtimeScore, opponentRealtimeScore *RealtimeScore
+	if isRed {
+		realtimeScore = arena.RedRealtimeScore
+		opponentRealtimeScore = arena.BlueRealtimeScore
+	} else {
+		realtimeScore = arena.BlueRealtimeScore
+		opponentRealtimeScore = arena.RedRealtimeScore
+	}
+
+	// Calculate shift indicator and time remaining.
+	redWonAuto, blueWonAuto := arena.determineAutoWinner()
+	isRedHubActive := game.IsRedHubActive(matchTimeSec, redWonAuto)
+	isBlueHubActive := game.IsBlueHubActive(matchTimeSec, blueWonAuto)
+	shiftIndicator := game.GetShiftIndicator(matchTimeSec, isRedHubActive, isBlueHubActive)
+	shiftTimeRemaining := game.GetShiftTimeRemaining(matchTimeSec)
+	shiftDisplay := fmt.Sprintf("%s%d", shiftIndicator, shiftTimeRemaining)
+
+	scoreSummary := realtimeScore.CurrentScore.Summarize(&opponentRealtimeScore.CurrentScore)
+	opponentScoreSummary := opponentRealtimeScore.CurrentScore.Summarize(&realtimeScore.CurrentScore)
+
+	if arena.CurrentMatch.Type != model.Playoff {
+		// Qualification format: "R10 105/360 30 1:54"
+		// FUEL RP progress: shows X/ENERGIZED until met, then X/SUPERCHARGED
+		fuelForRP := realtimeScore.CurrentScore.AutoFuel + realtimeScore.CurrentScore.ActiveFuel
+		var rpThreshold int
+		if fuelForRP >= game.EnergizedRPThreshold {
+			rpThreshold = game.SuperchargedRPThreshold
+		} else {
+			rpThreshold = game.EnergizedRPThreshold
+		}
+		rpProgress := fmt.Sprintf("%d/%d", fuelForRP, rpThreshold)
+
+		// AUTO TOWER points
+		autoTowerPoints := scoreSummary.AutoClimbPoints
+
+		return fmt.Sprintf("%s %s %d %s", shiftDisplay, rpProgress, autoTowerPoints, countdown)
+	}
+
+	// Playoff format: "R10 B115-R124 1:54"
+	var formatString string
+	if isRed {
+		formatString = "R%d-B%d"
+	} else {
+		formatString = "B%d-R%d"
+	}
+	allianceScores := fmt.Sprintf(formatString, scoreSummary.Score, opponentScoreSummary.Score)
+
+	return fmt.Sprintf("%s %s %s", shiftDisplay, allianceScores, countdown)
+}
+
+// Returns the in-match rear text for the timer display for the given alliance.
+func generateInMatchTimerRearText(arena *Arena, isRed bool, matchTimeSec float64) string {
 	var realtimeScore, opponentRealtimeScore *RealtimeScore
 	var formatString string
 	if isRed {
 		realtimeScore = arena.RedRealtimeScore
 		opponentRealtimeScore = arena.BlueRealtimeScore
-		formatString = "R%03d-B%03d"
+		formatString = "R%d-B%d"
 	} else {
 		realtimeScore = arena.BlueRealtimeScore
 		opponentRealtimeScore = arena.RedRealtimeScore
-		formatString = "B%03d-R%03d"
+		formatString = "B%d-R%d"
 	}
+
 	scoreSummary := realtimeScore.CurrentScore.Summarize(&opponentRealtimeScore.CurrentScore)
-	scoreTotal := scoreSummary.Score
 	opponentScoreSummary := opponentRealtimeScore.CurrentScore.Summarize(&realtimeScore.CurrentScore)
-	opponentScoreTotal := opponentScoreSummary.Score
-	allianceScores := fmt.Sprintf(formatString, scoreTotal, opponentScoreTotal)
+	allianceScores := fmt.Sprintf(formatString, scoreSummary.Score, opponentScoreSummary.Score)
 
-	// TODO: Add REBUILT-specific ranking point progress display
-	var rankingPointProgress string
-	if arena.CurrentMatch.Type != model.Playoff {
-		rankingPointProgress = fmt.Sprintf("%d", scoreSummary.TotalFuel)
-	}
-
-	return fmt.Sprintf("%s %s %s", countdown, allianceScores, rankingPointProgress)
-}
-
-// Returns the in-match rear text for the timer display for the given alliance.
-func generateInMatchTimerRearText(arena *Arena, isRed bool) string {
-	// TODO: Add REBUILT-specific rear text display (e.g., ball counts, shift info)
-	var score *game.Score
-	if isRed {
-		score = &arena.RedRealtimeScore.CurrentScore
-	} else {
-		score = &arena.BlueRealtimeScore.CurrentScore
-	}
-
-	return fmt.Sprintf(
-		"A:%02d T:%03d",
-		score.ActiveFuel,
-		score.ActiveFuel+score.InactiveFuel,
-	)
+	return allianceScores
 }
 
 // Returns the front text, front color, and rear text to display on the timer display.

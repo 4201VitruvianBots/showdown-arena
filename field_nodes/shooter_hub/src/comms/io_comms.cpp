@@ -31,3 +31,10 @@ float io_comms_getConfigMotorDutyCmd(hw_motor_configInstalledMotors_E motor) {
   }
   return 0.0f;
 }
+
+int io_comms_getMatchState(void) {
+  if (udp_comms_isServerConnected()) {
+    return udp_comms_getMatchState();
+  }
+  return 0; // PreMatch
+}
