@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"net"
 	"reflect"
 	"strconv"
 	"strings"
@@ -107,6 +108,7 @@ type Arena struct {
 	autoTieWinner                     string // "red" or "blue" - randomly chosen at match start for tie-breaking
 	redHubStartingFuel                int
 	blueHubStartingFuel               int
+	DriverStationUdpSocket            *net.UDPConn
 }
 
 type AllianceStation struct {
