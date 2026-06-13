@@ -834,8 +834,10 @@ func (arena *Arena) checkEndgameStart(matchTimeSec float64) {
 
 // Loops indefinitely to track and update the arena components.
 func (arena *Arena) Run() {
-	// Start other loops in goroutines.
+	// Bind the shared driver station UDP socket before any loop sends control packets from it.
 	arena.initializeUdpListener()
+
+	// Start other loops in goroutines.
 	go arena.listenForDriverStations()
 	go arena.listenForDsUdpPackets()
 	go arena.accessPoint.Run()
