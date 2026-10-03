@@ -551,7 +551,12 @@ func (arena *Arena) serveDriverStations(listener net.Listener) {
 			tcpConn.Close()
 			continue
 		}
-		arena.AllianceStations[assignedStation].DsConn = dsConn
+		allianceStation := arena.AllianceStations[assignedStation]
+		if previousDsConn := allianceStation.DsConn; previousDsConn != nil {
+			dsConn.copyDsReportedStatus(previousDsConn)
+			previousDsConn.close()
+		}
+		allianceStation.DsConn = dsConn
 
 		if wrongAssignedStation != "" {
 			dsConn.WrongStation = wrongAssignedStation
@@ -590,7 +595,7 @@ func readTaggedTcpPacket(tcpConn net.Conn, buffer []byte) (int, error) {
 func (dsConn *DriverStationConnection) handleTcpConnection(arena *Arena) {
 	buffer := make([]byte, maxTcpPacketBytes)
 	for {
-		_, err := readTaggedTcpPacket(dsConn.tcpConn, buffer)
+		count, err := readTaggedTcpPacket(dsConn.tcpConn, buffer)
 		if err != nil {
 			log.Printf("Error reading from connection for Team %d: %v", dsConn.TeamId, err)
 			dsConn.close()
@@ -606,7 +611,7 @@ func (dsConn *DriverStationConnection) handleTcpConnection(arena *Arena) {
 			// DS keepalive packet; do nothing.
 			continue
 		case 22:
-			// Robot log packet. Just use to trigger fms log
+			dsConn.parseDsLogPacket(buffer[:count])
 			// Create a log entry if the match is in progress.
 			matchTimeSec := arena.MatchTimeSec()
 			if matchTimeSec > 0 && dsConn.log != nil {
