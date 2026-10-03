@@ -5,6 +5,7 @@ package field
 
 import (
 	"fmt"
+	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/model"
 	"github.com/Team254/cheesy-arena/network"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +42,7 @@ func TestEncodeControlPacket(t *testing.T) {
 	assert.Equal(t, byte(0), data[5])
 	assert.Equal(t, byte(0), data[6])
 	assert.Equal(t, byte(0), data[20])
-	assert.Equal(t, byte(15), data[21])
+	assert.Equal(t, byte(game.MatchTiming.AutoDurationSec), data[21])
 
 	// Check the different alliance station values.
 	dsConn.AllianceStation = "R2"
@@ -132,18 +133,18 @@ func TestEncodeControlPacket(t *testing.T) {
 	arena.MatchState = AutoPeriod
 	arena.MatchStartTime = time.Now().Add(-time.Duration(4 * time.Second))
 	data = dsConn.encodeControlPacket(arena, "")
-	assert.Equal(t, byte(11), data[21])
+	assert.Equal(t, byte(16), data[21])
 	arena.MatchState = PausePeriod
 	arena.MatchStartTime = time.Now().Add(-time.Duration(16 * time.Second))
 	data = dsConn.encodeControlPacket(arena, "")
-	assert.Equal(t, byte(135), data[21])
+	assert.Equal(t, byte(140), data[21])
 	arena.MatchState = TeleopPeriod
 	arena.MatchStartTime = time.Now().Add(-time.Duration(33 * time.Second))
 	data = dsConn.encodeControlPacket(arena, "")
-	assert.Equal(t, byte(119), data[21])
+	assert.Equal(t, byte(129), data[21])
 	arena.MatchStartTime = time.Now().Add(-time.Duration(150 * time.Second))
 	data = dsConn.encodeControlPacket(arena, "")
-	assert.Equal(t, byte(2), data[21])
+	assert.Equal(t, byte(12), data[21])
 	arena.MatchState = PostMatch
 	arena.MatchStartTime = time.Now().Add(-time.Duration(180 * time.Second))
 	data = dsConn.encodeControlPacket(arena, "")
@@ -370,4 +371,60 @@ func waitForDriverStationConnection(t *testing.T, arena *Arena, station string) 
 	}
 
 	return dsConn
+}
+
+func TestNewDriverStationProtocol(t *testing.T) {
+	arena := setupTestArena(t)
+	arena.assignTeam(1503, "B2")
+	serverAddress := startTestDriverStationServer(t, arena)
+
+	// Connect as Team 1503 using the new DS handshake (tag 30).
+	tcpConn, err := net.Dial("tcp", serverAddress)
+	assert.Nil(t, err)
+	defer tcpConn.Close()
+
+	// New DS packet: size (2 bytes) = 9, tag = 30, udpPort = 58000 (0xE290), flags = 0, teamLen = 4, "1503"
+	teamStr := "1503"
+	initPacket := make([]byte, 7+len(teamStr))
+	initPacket[0] = 0
+	initPacket[1] = byte(5 + len(teamStr))
+	initPacket[2] = 30 // New DS tag
+	initPacket[3] = byte(58000 >> 8)
+	initPacket[4] = byte(58000 & 0xFF)
+	initPacket[5] = 0 // flags
+	initPacket[6] = byte(len(teamStr))
+	copy(initPacket[7:], []byte(teamStr))
+
+	_, err = tcpConn.Write(initPacket)
+	assert.Nil(t, err)
+
+	// Read assignment packet back: expect tag 31, length 6
+	dataReceived := make([]byte, 100)
+	count, err := readTaggedTcpPacket(tcpConn, dataReceived)
+	assert.Nil(t, err)
+	assert.Equal(t, 8, count)
+	assert.Equal(t, byte(0), dataReceived[0])
+	assert.Equal(t, byte(6), dataReceived[1])
+	assert.Equal(t, byte(31), dataReceived[2]) // Tag 31 for new DS assignment
+	assert.Equal(t, byte(4), dataReceived[3])  // Station B2
+	assert.Equal(t, byte(0), dataReceived[4])  // Status OK
+	assert.Equal(t, byte(1503>>8), dataReceived[6])
+	assert.Equal(t, byte(1503&0xFF), dataReceived[7])
+
+	dsConn := waitForDriverStationConnection(t, arena, "B2")
+	if assert.NotNil(t, dsConn) {
+		assert.True(t, dsConn.newDs)
+		assert.Equal(t, uint16(58000), dsConn.udpAddrPort.Port())
+
+		// Verify game data encoding in UDP control packet for new DS
+		controlPacket := dsConn.encodeControlPacket(arena, "R")
+		assert.Equal(t, 25, len(controlPacket))
+		assert.Equal(t, byte(2), controlPacket[22])  // Length (1 tag + 1 byte)
+		assert.Equal(t, byte(32), controlPacket[23]) // Tag 32 = game data
+		assert.Equal(t, byte('R'), controlPacket[24])
+
+		// Verify empty game data doesn't append tag 32
+		controlPacketEmpty := dsConn.encodeControlPacket(arena, "")
+		assert.Equal(t, 22, len(controlPacketEmpty))
+	}
 }

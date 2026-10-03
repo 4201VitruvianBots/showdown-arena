@@ -719,3 +719,8 @@ func (dsConn *DriverStationConnection) sendGameDataPacketTcp(gameData string) er
 	}
 	return nil
 }
+
+// Sends game data to the driver station.
+func (dsConn *DriverStationConnection) sendGameDataPacket(gameData string) error {
+	return dsConn.checkGameData(gameData)
+}

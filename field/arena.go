@@ -1136,6 +1136,7 @@ func (arena *Arena) sendHubActivationGameData() {
 
 	// Send game data to all driver stations
 	for _, allianceStation := range arena.AllianceStations {
+		allianceStation.GameData = gameData
 		if allianceStation.DsConn != nil {
 			err := allianceStation.DsConn.sendGameDataPacket(gameData)
 			if err != nil {
@@ -1495,87 +1496,103 @@ func (arena *Arena) handleHubLights() {
 			blueLedPattern = "off"
 		}
 
-			// Apply flashing/ramping or chase if needed
-			if shouldFlash {
-				// Ramp: Dim over 0.25s, then brighten over 0.25s (2Hz cycle)
-				timeInCycle := math.Mod(matchTimeSec, 0.5)
-				var multiplier float64
-				if timeInCycle < 0.25 {
-					multiplier = timeInCycle / 0.25
-				} else {
-					multiplier = 1.0 - (timeInCycle-0.25)/0.25
-				}
-
-				if redHubActive {
-					applyRedFlash := true
-					if inTransitionEnd && !redWonAuto {
-						applyRedFlash = false
-					}
-					if applyRedFlash {
-						redColor = redColor.Scale(multiplier)
-						redLedPattern = "red_flash"
-					}
-				}
-				if blueHubActive {
-					applyBlueFlash := true
-					if inTransitionEnd && redWonAuto {
-						applyBlueFlash = false
-					}
-					if applyBlueFlash {
-						blueColor = blueColor.Scale(multiplier)
-						blueLedPattern = "blue_flash"
-					}
-				}
+		// Apply flashing/ramping or chase if needed
+		if shouldFlash {
+			// Ramp: Dim over 0.25s, then brighten over 0.25s (2Hz cycle)
+			timeInCycle := math.Mod(matchTimeSec, 0.5)
+			var multiplier float64
+			if timeInCycle < 0.25 {
+				multiplier = timeInCycle / 0.25
+			} else {
+				multiplier = 1.0 - (timeInCycle-0.25)/0.25
 			}
 
-			if matchTimeSec >= teleopStartSec && matchTimeSec < transitionEndSec {
-				timeInTransition := matchTimeSec - teleopStartSec
-				if redWonAuto {
-					if timeInTransition < 7.0 {
-						if !useRedHubEsp { arena.RedHubLeds.SetChase(led.ColorRed, matchTimeSec) }
-						redLedPattern = "red_chase"
-					} else {
-						timeInCycle := math.Mod(matchTimeSec, 0.5)
-						var multiplier float64
-						if timeInCycle < 0.25 {
-							multiplier = timeInCycle / 0.25
-						} else {
-							multiplier = 1.0 - (timeInCycle-0.25)/0.25
-						}
-						if !useRedHubEsp { arena.RedHubLeds.SetColor(led.ColorRed.Scale(multiplier)) }
-						redLedPattern = "red_flash"
+			if redHubActive {
+				applyRedFlash := true
+				if inTransitionEnd && !redWonAuto {
+					applyRedFlash = false
+				}
+				if applyRedFlash {
+					redColor = redColor.Scale(multiplier)
+					redLedPattern = "red_flash"
+				}
+			}
+			if blueHubActive {
+				applyBlueFlash := true
+				if inTransitionEnd && redWonAuto {
+					applyBlueFlash = false
+				}
+				if applyBlueFlash {
+					blueColor = blueColor.Scale(multiplier)
+					blueLedPattern = "blue_flash"
+				}
+			}
+		}
+
+		if matchTimeSec >= teleopStartSec && matchTimeSec < transitionEndSec {
+			timeInTransition := matchTimeSec - teleopStartSec
+			if redWonAuto {
+				if timeInTransition < 7.0 {
+					if !useRedHubEsp {
+						arena.RedHubLeds.SetChase(led.ColorRed, matchTimeSec)
 					}
-					if !useBlueHubEsp { arena.BlueHubLeds.SetColor(blueColor) }
+					redLedPattern = "red_chase"
 				} else {
-					if !useRedHubEsp { arena.RedHubLeds.SetColor(redColor) }
-					if timeInTransition < 7.0 {
-						if !useBlueHubEsp { arena.BlueHubLeds.SetChase(led.ColorBlue, matchTimeSec) }
-						blueLedPattern = "blue_chase"
+					timeInCycle := math.Mod(matchTimeSec, 0.5)
+					var multiplier float64
+					if timeInCycle < 0.25 {
+						multiplier = timeInCycle / 0.25
 					} else {
-						timeInCycle := math.Mod(matchTimeSec, 0.5)
-						var multiplier float64
-						if timeInCycle < 0.25 {
-							multiplier = timeInCycle / 0.25
-						} else {
-							multiplier = 1.0 - (timeInCycle-0.25)/0.25
-						}
-						if !useBlueHubEsp { arena.BlueHubLeds.SetColor(led.ColorBlue.Scale(multiplier)) }
-						blueLedPattern = "blue_flash"
+						multiplier = 1.0 - (timeInCycle-0.25)/0.25
 					}
+					if !useRedHubEsp {
+						arena.RedHubLeds.SetColor(led.ColorRed.Scale(multiplier))
+					}
+					redLedPattern = "red_flash"
+				}
+				if !useBlueHubEsp {
+					arena.BlueHubLeds.SetColor(blueColor)
 				}
 			} else {
-				if !useRedHubEsp { arena.RedHubLeds.SetColor(redColor) }
-				if !useBlueHubEsp { arena.BlueHubLeds.SetColor(blueColor) }
+				if !useRedHubEsp {
+					arena.RedHubLeds.SetColor(redColor)
+				}
+				if timeInTransition < 7.0 {
+					if !useBlueHubEsp {
+						arena.BlueHubLeds.SetChase(led.ColorBlue, matchTimeSec)
+					}
+					blueLedPattern = "blue_chase"
+				} else {
+					timeInCycle := math.Mod(matchTimeSec, 0.5)
+					var multiplier float64
+					if timeInCycle < 0.25 {
+						multiplier = timeInCycle / 0.25
+					} else {
+						multiplier = 1.0 - (timeInCycle-0.25)/0.25
+					}
+					if !useBlueHubEsp {
+						arena.BlueHubLeds.SetColor(led.ColorBlue.Scale(multiplier))
+					}
+					blueLedPattern = "blue_flash"
+				}
 			}
-			
-			if arena.EventSettings.AlternateIOEnabled {
-				arena.Esp32.SetRedHubLedPattern(redLedPattern)
-				arena.Esp32.SetBlueHubLedPattern(blueLedPattern)
+		} else {
+			if !useRedHubEsp {
+				arena.RedHubLeds.SetColor(redColor)
 			}
+			if !useBlueHubEsp {
+				arena.BlueHubLeds.SetColor(blueColor)
+			}
+		}
+
+		if arena.EventSettings.AlternateIOEnabled {
+			arena.Esp32.SetRedHubLedPattern(redLedPattern)
+			arena.Esp32.SetBlueHubLedPattern(blueLedPattern)
+		}
 	} else if arena.MatchState == PreMatch || arena.MatchState == PostMatch || arena.MatchState == TimeoutActive || arena.MatchState == PostTimeout {
 		useRedHubEsp := arena.EventSettings.AlternateIOEnabled && arena.Esp32.IsRedHubEnabled()
 		useBlueHubEsp := arena.EventSettings.AlternateIOEnabled && arena.Esp32.IsBlueHubEnabled()
-		
+
 		// Post MATCH 3 Second Scoring Assessment Period (White)
 		inScoringAssessment := arena.MatchState == PostMatch && time.Since(arena.MatchStartTime).Seconds() <= game.GetDurationToTeleopEnd().Seconds()+3.0 && !arena.matchAborted && !arena.MatchStartTime.IsZero()
 
@@ -1583,23 +1600,39 @@ func (arena *Arena) handleHubLights() {
 
 		if arena.FieldReset {
 			// FIELD is safe for all (Green)
-			if !useRedHubEsp { arena.RedHubLeds.SetColor(led.ColorGreen) }
-			if !useBlueHubEsp { arena.BlueHubLeds.SetColor(led.ColorGreen) }
+			if !useRedHubEsp {
+				arena.RedHubLeds.SetColor(led.ColorGreen)
+			}
+			if !useBlueHubEsp {
+				arena.BlueHubLeds.SetColor(led.ColorGreen)
+			}
 			fallbackRedPattern, fallbackBluePattern = "green", "green"
 		} else if arena.FieldVolunteers {
 			// FIELD is safe for FIELD STAFF (Purple)
-			if !useRedHubEsp { arena.RedHubLeds.SetColor(led.ColorPurple) }
-			if !useBlueHubEsp { arena.BlueHubLeds.SetColor(led.ColorPurple) }
+			if !useRedHubEsp {
+				arena.RedHubLeds.SetColor(led.ColorPurple)
+			}
+			if !useBlueHubEsp {
+				arena.BlueHubLeds.SetColor(led.ColorPurple)
+			}
 			fallbackRedPattern, fallbackBluePattern = "purple", "purple"
 		} else if inScoringAssessment {
 			// Assessment period before flags are set
-			if !useRedHubEsp { arena.RedHubLeds.SetColor(led.ColorWhite) }
-			if !useBlueHubEsp { arena.BlueHubLeds.SetColor(led.ColorWhite) }
+			if !useRedHubEsp {
+				arena.RedHubLeds.SetColor(led.ColorWhite)
+			}
+			if !useBlueHubEsp {
+				arena.BlueHubLeds.SetColor(led.ColorWhite)
+			}
 			fallbackRedPattern, fallbackBluePattern = "white", "white"
 		} else {
 			// Pre-MATCH / Post-MATCH fallback (Off)
-			if !useRedHubEsp { arena.RedHubLeds.SetColor(led.ColorOff) }
-			if !useBlueHubEsp { arena.BlueHubLeds.SetColor(led.ColorOff) }
+			if !useRedHubEsp {
+				arena.RedHubLeds.SetColor(led.ColorOff)
+			}
+			if !useBlueHubEsp {
+				arena.BlueHubLeds.SetColor(led.ColorOff)
+			}
 			fallbackRedPattern, fallbackBluePattern = "off", "off"
 		}
 		if arena.EventSettings.AlternateIOEnabled {
@@ -1609,10 +1642,14 @@ func (arena *Arena) handleHubLights() {
 	} else {
 		useRedHubEsp := arena.EventSettings.AlternateIOEnabled && arena.Esp32.IsRedHubEnabled()
 		useBlueHubEsp := arena.EventSettings.AlternateIOEnabled && arena.Esp32.IsBlueHubEnabled()
-		
+
 		// Default to off
-		if !useRedHubEsp { arena.RedHubLeds.SetColor(led.ColorOff) }
-		if !useBlueHubEsp { arena.BlueHubLeds.SetColor(led.ColorOff) }
+		if !useRedHubEsp {
+			arena.RedHubLeds.SetColor(led.ColorOff)
+		}
+		if !useBlueHubEsp {
+			arena.BlueHubLeds.SetColor(led.ColorOff)
+		}
 		if arena.EventSettings.AlternateIOEnabled {
 			arena.Esp32.SetRedHubLedPattern("off")
 			arena.Esp32.SetBlueHubLedPattern("off")
@@ -1621,12 +1658,15 @@ func (arena *Arena) handleHubLights() {
 
 	useRedHubEsp := arena.EventSettings.AlternateIOEnabled && arena.Esp32.IsRedHubEnabled()
 	useBlueHubEsp := arena.EventSettings.AlternateIOEnabled && arena.Esp32.IsBlueHubEnabled()
-	
-	if !useRedHubEsp { arena.RedHubLeds.Update() }
-	if !useBlueHubEsp { arena.BlueHubLeds.Update() }
+
+	if !useRedHubEsp {
+		arena.RedHubLeds.Update()
+	}
+	if !useBlueHubEsp {
+		arena.BlueHubLeds.Update()
+	}
 	arena.HubLedNotifier.Notify()
 }
-
 
 func (arena *Arena) handleTeamStop(station string, eStopState, aStopState bool) {
 	allianceStation := arena.AllianceStations[station]
